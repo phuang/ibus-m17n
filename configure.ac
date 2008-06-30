@@ -51,7 +51,7 @@ AM_PROG_LIBTOOL
 
 # check anthy
 PKG_CHECK_MODULES(M17N, [
-	m17n-core
+	m17n-shell
 ])
 
 # check swig
