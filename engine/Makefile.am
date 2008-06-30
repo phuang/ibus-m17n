@@ -22,7 +22,6 @@ engine_m17n_PYTHON = \
 	engine.py \
 	factory.py \
 	main.py \
-	tables.py \
 	test.py \
 	$(NULL)
 
@@ -60,7 +59,7 @@ libexec_SCRIPTS = ibus-engine-m17n
 m17n.py m17n_wrap.c: m17n.i
 	$(SWIG) -python -I/usr/include -o m17n_wrap.c $(srcdir)/m17n.i
 
-test:
+test: all
 	$(ENV) PYTHONPATH=$(builddir)/.libs $(PYTHON) $(srcdir)/main.py
 
 EXTRA_DIST = \

@@ -20,35 +20,46 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 from ibus import interface
+import m17n
 import engine
 
-FACTORY_PATH = "/com/redhat/IBus/engines/Anthy/Factory"
-ENGINE_PATH = "/com/redhat/IBus/engines/Anthy/Engine/%d"
+FACTORY_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Factory"
+ENGINE_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Engine/%d"
 
-class DemoEngineFactory (interface.IEngineFactory):
-	NAME = "Anthy"
-	LANG = "ja"
-	ICON = "ibus-anthy"
+class EngineFactory (interface.IEngineFactory):
 	AUTHORS = "Huang Peng <shawn.p.huang@gmail.com>"
 	CREDITS = "GPLv2"
 
-	def __init__ (self, dbusconn):
-		interface.IEngineFactory.__init__ (self, dbusconn, object_path = FACTORY_PATH)
+	def __init__ (self, lang, name, dbusconn):
+		self._engine_name = name
+		self._lang = lang
+		self._object_path = FACTORY_PATH % (lang, name)
+		
+		interface.IEngineFactory.__init__ (self, dbusconn, object_path = self._object_path)
+		
+		self._im = m17n.MInputMethod (lang, name)
+		
+		self._icon = "ibus-m17n"
 		self._dbusconn = dbusconn
 		self._max_engine_id = 1
+
+	def get_object_path (self):
+		return self._object_path
 	
 	def GetInfo (self):
-		return [
-			self.NAME,
-			self.LANG,
-			self.ICON,
+		result = [
+			self._engine_name,
+			self._lang,
+			self._icon,
 			self.AUTHORS,
 			self.CREDITS
 			]
+		return result
 
 	def CreateEngine (self):
-		engine_path = ENGINE_PATH % self._max_engine_id
+		engine_path = ENGINE_PATH % (self._lang, self._name, self._max_engine_id)
 		self._max_engine_id += 1
-		return engine.Engine (self._dbusconn, engine_path)
+		ic = self._im.create_ic ()
+		return engine.Engine (ic, self._dbusconn, engine_path)
 
 

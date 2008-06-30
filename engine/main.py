@@ -35,9 +35,9 @@ class IMApp:
 		self._dbusconn.add_signal_receiver (self._disconnected_cb, 
 							"Disconnected", 
 							dbus_interface = dbus.LOCAL_IFACE)
-		self._engine = factory.DemoEngineFactory (self._dbusconn)
+		self._factory = factory.EngineFactory ("zh", "pinyin", self._dbusconn)
 		self._ibus = self._dbusconn.get_object (ibus.IBUS_NAME, ibus.IBUS_PATH)
-		self._ibus.RegisterFactories ([factory.FACTORY_PATH], **ibus.DEFAULT_ASYNC_HANDLERS)
+		self._ibus.RegisterFactories ([self._factory.get_object_path ()], **ibus.DEFAULT_ASYNC_HANDLERS)
 
 	def run (self):
 		gtk.main ()
