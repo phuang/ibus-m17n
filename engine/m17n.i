@@ -168,11 +168,16 @@ _im_callback (MInputContext *ic, MSymbol command)
 /* define typemap MText * */
 %typemap (out) CandidateList {
     PyObject *list = PyList_New (0);
-    
-    MPlist *group = $1;
+
+    MPlist *group;
     MConverter *utf8_converter;
     int bufsize;
     char *buf;
+
+    if (! $1) {
+        $result = list;
+        return;
+    }
     
     bufsize = 64;
     buf = PyMem_Malloc (bufsize);
@@ -180,6 +185,7 @@ _im_callback (MInputContext *ic, MSymbol command)
      
     for (group = $1; mplist_key (group) != Mnil; group = mplist_next (group)) {
         if (mplist_key (group) == Mtext) {
+            fprintf (stderr, "Mtext\n");
             MText *text = (MText *) mplist_value (group);
             
             if (bufsize < mtext_len (text) * 6) {
@@ -193,6 +199,8 @@ _im_callback (MInputContext *ic, MSymbol command)
             PyList_Append (list, PyString_FromString (buf));
         }
         else {
+            fprintf (stderr, "MPlist\n");
+            
             PyObject *l = PyList_New (0);
             MPlist *p = (MPlist *)mplist_value (group);
             for (; mplist_key (p) != Mnil; p = mplist_next (p)) {

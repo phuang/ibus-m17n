@@ -1,3 +1,4 @@
+import sys
 import m17n
 
 class Engine:
@@ -26,37 +27,41 @@ class Engine:
 
 
 	def _input_preedit_start_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_preedit_done_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_preedit_draw_cb (self, command):
-		print command, self._ic.preedit
+		print >> sys.stderr, command, self._ic.preedit
 	
 	def _input_states_start_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_states_done_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_states_draw_cb (self, command):
-		print command, self._ic.status
+		print >> sys.stderr, command, self._ic.status
 	
 	def _input_candidates_start_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_candidates_done_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_candidates_draw_cb (self, command):
-		print command, self._ic.candidates
+		print >> sys.stderr, command, self._ic.candidates_show
+		for x in self._ic.candidates:
+			print >> sys.stderr, " ===="
+			for c in x:
+				print >> sys.stderr, c
 
 	def _input_set_spot_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_toggle_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_reset_cb (self, command):
-		print command
+		print >> sys.stderr, command
 
 	def _input_get_surrounding_text_cb (self, command):
-		print command
+		print >> sys.stderr, command
 	def _input_delete_surrounding_text_cb (self, command):
-		print command
+		print >> sys.stderr, command
 
 	def _page_up (self):
 		pass
@@ -74,7 +79,11 @@ class Engine:
 		if not is_press:
 			return False
 		symbol = chr (keyval)
+		if keyval == ord (' '):
+			symbol = "space"
 		self._ic.filter (symbol)
+		lookup = self._ic.lookup (symbol)
+		print >> sys.stderr, "lookup = \"%s|%s\"" % (lookup, type (lookup))
 		# ignore key release events
 
 		return True
@@ -86,10 +95,11 @@ class Engine:
 		self.UpdateProperty (prop.to_dbus_value ())
 
 eng = Engine ()
-eng._process_key_event (ord('c'), 1, 0)
+eng._process_key_event (ord('z'), 1, 0)
 eng._process_key_event (ord('h'), 1, 0)
 eng._process_key_event (ord('o'), 1, 0)
 eng._process_key_event (ord('n'), 1, 0)
 eng._process_key_event (ord('g'), 1, 0)
+eng._process_key_event (ord(' '), 1, 0)
 
 
