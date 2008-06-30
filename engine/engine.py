@@ -36,23 +36,23 @@ class Engine (interface.IEngine):
 		self._ic = ic
 
 		self._ic.set_callback (m17n.Minput_preedit_start.name (), self._input_preedit_start_cb)
-		# self._ic.set_callback (m17n.Minput_preedit_done, self._input_preedit_done_cb)
-		# self._ic.set_callback (m17n.Minput_preedit_draw, self._input_preedit_draw_cb)
-		# 
-		# self._ic.set_callback (m17n.Minput_status_start, self._input_states_start_cb)
-		# self._ic.set_callback (m17n.Minput_status_done, self._input_states_done_cb)
-		# self._ic.set_callback (m17n.Minput_status_draw, self._input_states_draw_cb)
-		# 
-		# self._ic.set_callback (m17n.Minput_candidates_start, self._input_candidates_start_cb)
-		# self._ic.set_callback (m17n.Minput_candidates_done, self._input_candidates_done_cb)
-		# self._ic.set_callback (m17n.Minput_candidates_draw, self._input_candidates_draw_cb)
-		# 
-		# self._ic.set_callback (m17n.Minput_set_spot, self._input_set_spot_cb)
-		# self._ic.set_callback (m17n.Minput_toggle, self._input_toggle_cb)
-		# self._ic.set_callback (m17n.Minput_reset, self._input_reset_cb)
+		self._ic.set_callback (m17n.Minput_preedit_done.name (), self._input_preedit_done_cb)
+		self._ic.set_callback (m17n.Minput_preedit_draw.name (), self._input_preedit_draw_cb)
+		
+		self._ic.set_callback (m17n.Minput_status_start.name (), self._input_states_start_cb)
+		self._ic.set_callback (m17n.Minput_status_done.name (), self._input_states_done_cb)
+		self._ic.set_callback (m17n.Minput_status_draw.name (), self._input_states_draw_cb)
+		
+		self._ic.set_callback (m17n.Minput_candidates_start.name (), self._input_candidates_start_cb)
+		self._ic.set_callback (m17n.Minput_candidates_done.name (), self._input_candidates_done_cb)
+		self._ic.set_callback (m17n.Minput_candidates_draw.name (), self._input_candidates_draw_cb)
+		
+		self._ic.set_callback (m17n.Minput_set_spot.name (), self._input_set_spot_cb)
+		self._ic.set_callback (m17n.Minput_toggle.name (), self._input_toggle_cb)
+		self._ic.set_callback (m17n.Minput_reset.name (), self._input_reset_cb)
 
-		# self._ic.set_callback (m17n.Minput_get_surrounding_text, self._input_get_surrounding_text_cb)
-		# self._ic.set_callback (m17n.Minput_delete_surrounding_text, self._input_delete_surrounding_text_cb)
+		self._ic.set_callback (m17n.Minput_get_surrounding_text.name (), self._input_get_surrounding_text_cb)
+		self._ic.set_callback (m17n.Minput_delete_surrounding_text.name (), self._input_delete_surrounding_text_cb)
 
 		self._lookup_table = ibus.LookupTable ()
 
@@ -88,9 +88,18 @@ class Engine (interface.IEngine):
 		pass
 
 	def _process_key_event (self, keyval, is_press, state):
-		# ignore key release events
 		if not is_press:
 			return False
+
+		key = chr (keyval)
+		ret = self._ic.filter (key)
+		
+		if ret:
+			return True
+
+		lookup = self._ic.lookup (key)
+		if lookup:
+			self.CommitString (lookup)
 
 		return True
 

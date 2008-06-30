@@ -101,6 +101,9 @@ _im_callback (MInputContext *ic, MSymbol command)
     PyObject *_command = NULL;
 
     _dict = PyDict_GetItem (_ic_dict, PyInt_FromLong ((unsigned long)ic));
+    
+    if (_dict == NULL)
+        return;
 
     _command = PyString_FromString (msymbol_name (command));
 
