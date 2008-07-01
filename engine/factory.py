@@ -34,7 +34,7 @@ class EngineFactory (interface.IEngineFactory):
 	def __init__ (self, lang, name, dbusconn):
 		self._engine_name = name
 		self._lang = lang
-		self._object_path = FACTORY_PATH % (lang, name.replace("-", "_"))
+		self._object_path = FACTORY_PATH % (lang, self._engine_name.replace ("-", "_"))
 		
 		interface.IEngineFactory.__init__ (self, dbusconn, object_path = self._object_path)
 		self._im = m17n.MInputMethod (lang, name)
@@ -57,7 +57,7 @@ class EngineFactory (interface.IEngineFactory):
 		return result
 
 	def CreateEngine (self):
-		engine_path = ENGINE_PATH % (self._lang, self._name, self._max_engine_id)
+		engine_path = ENGINE_PATH % (self._lang, self._engine_name.replace ("-", "_"), self._max_engine_id)
 		self._max_engine_id += 1
 		ic = self._im.create_ic ()
 		return engine.Engine (ic, self._dbusconn, engine_path)
