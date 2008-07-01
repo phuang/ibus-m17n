@@ -129,11 +129,23 @@ _im_callback (MInputContext *ic, MSymbol command)
 %}
 
 /* define typemap MSymbol */
+
 %typemap (in) MSymbol {
     if ($input == Py_None)
         $1 = Mnil;
-    else
-        $1 =  msymbol (PyString_AsString ($input));
+    else {
+        if (PyString_Check ($input)) {
+            $1 = msymbol (PyString_AsString ($input));
+        }
+        else {
+            void *p;
+            if (SWIG_ConvertPtr ($input, &p,
+                    SWIGTYPE_p_MSymbolStruct, 0) == SWIG_OK)
+                $1 = (MSymbol)p;
+            else
+                $1 = NULL;
+        }
+    }
 }
 
 %typemap (out) MSymbol {
@@ -421,6 +433,7 @@ IMList *list_input_methods ();
 MText *minput_get_description (MSymbol lang, MSymbol name);
 MText *minput_get_title (MSymbol lang, MSymbol name);
 MText *minput_get_icon (MSymbol lang, MSymbol name);
+
 %rename (MSymbol) MSymbolStruct;
 struct MSymbolStruct {};
 typedef struct MSymbolStruct *MSymbol;
@@ -430,6 +443,10 @@ typedef struct MSymbolStruct *MSymbol;
     }
     
     char *name () {
+        return msymbol_name (self);
+    }
+
+    char *__str__ () {
         return msymbol_name (self);
     }
 
