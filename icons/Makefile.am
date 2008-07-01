@@ -20,11 +20,11 @@
 # Boston, MA  02111-1307  USA
 
 icons_DATA = \
-	ibus-enchant.svg \
+	ibus-m17n.svg \
 	$(NULL)
 
 iconsdir = $(datadir)/ibus/icons
 
 EXTRA_DIST = \
-	ibus-enchant.svg \
+	ibus-m17n.svg \
 	$(NULL)
