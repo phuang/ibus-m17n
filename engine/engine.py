@@ -38,16 +38,16 @@ class Engine (interface.IEngine):
 
 		self._ic.set_callback (m17n.Minput_preedit_start,
 					self._input_preedit_start_cb)
-		self._ic.set_callback (m17n.Minput_preedit_done.name,
+		self._ic.set_callback (m17n.Minput_preedit_done,
 					self._input_preedit_done_cb)
-		self._ic.set_callback (m17n.Minput_preedit_draw.name,
+		self._ic.set_callback (m17n.Minput_preedit_draw,
 					self._input_preedit_draw_cb)
 
-		self._ic.set_callback (m17n.Minput_status_start.name,
+		self._ic.set_callback (m17n.Minput_status_start,
 					self._input_states_start_cb)
 		self._ic.set_callback (m17n.Minput_status_done,
 					self._input_states_done_cb)
-		self._ic.set_callback (m17n.Minput_status_draw.name,
+		self._ic.set_callback (m17n.Minput_status_draw,
 					self._input_states_draw_cb)
 
 		self._ic.set_callback (m17n.Minput_candidates_start,
