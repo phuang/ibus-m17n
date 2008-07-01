@@ -25,20 +25,30 @@ import getopt
 import dbus
 import dbus.connection
 import dbus.mainloop.glib
+import m17n
 import ibus
 import factory
 import gobject
 
 class IMApp:
-	def __init__ (self):
+	def __init__ (self, methods):
 		self._loop = gobject.MainLoop ()
 		self._dbusconn = dbus.connection.Connection (ibus.IBUS_ADDR)
 		self._dbusconn.add_signal_receiver (self._disconnected_cb, 
 							"Disconnected", 
 							dbus_interface = dbus.LOCAL_IFACE)
-		self._factory = factory.EngineFactory ("zh", "pinyin", self._dbusconn)
 		self._ibus = self._dbusconn.get_object (ibus.IBUS_NAME, ibus.IBUS_PATH)
-		self._ibus.RegisterFactories ([self._factory.get_object_path ()], **ibus.DEFAULT_ASYNC_HANDLERS)
+
+		self._methods = []
+		self._factories = []
+		for lang, name in methods:
+			try:
+				f = factory.EngineFactory (lang, name, self._dbusconn)
+				self._factories.append (f)
+			except Exception, e:
+				print e
+		if self._factories:
+			self._ibus.RegisterFactories (map (lambda f: f.get_object_path (), self._factories), **ibus.DEFAULT_ASYNC_HANDLERS)
 
 	def run (self):
 		self._loop.run ()
@@ -48,19 +58,30 @@ class IMApp:
 		self._loop.quit ()
 
 
-def launch_engine ():
+def launch_engine (methods):
 	dbus.mainloop.glib.DBusGMainLoop (set_as_default=True)
-	IMApp ().run ()
+	IMApp (methods).run ()
 
 def print_help (out, v = 0):
 	print >> out, "-h, --help             show this message."
 	print >> out, "-d, --daemonize        daemonize ibus"
+	print >> out, "-l, --list             list all m17n input methods"
 	sys.exit (v)
+
+def list_m17n_ims ():
+	print "list all m17n input methods:"
+	print "\tlang\tname -- title"
+	for name, lang in m17n.list_input_methods ():
+		print "\t%s\t%s -- %s" % (lang, name, m17n.minput_get_title (lang, name))
+	sys.exit (0)
 
 def main ():
 	daemonize = False
-	shortopt = "hd"
-	longopt = ["help", "daemonize"]
+	shortopt = "hdla"
+	longopt = ["help", "daemonize", "list", "all"]
+	all_methods = False
+	methods = []
+
 	try:
 		opts, args = getopt.getopt (sys.argv[1:], shortopt, longopt)
 	except getopt.GetoptError, err:
@@ -71,6 +92,10 @@ def main ():
 			print_help (sys.stdout)
 		elif o in ("-d", "--daemonize"):
 			daemonize = True
+		elif o in ("-l", "--list"):
+			list_m17n_ims ()
+		elif o in ("-a", "--all"):
+			all_methods = True
 		else:
 			print >> sys.stderr, "Unknown argument: %s" % o
 			print_help (sys.stderr, 1)
@@ -78,8 +103,15 @@ def main ():
 	if daemonize:
 		if os.fork ():
 			sys.exit ()
+	if all_methods:
+		methods = map (lambda im: (im[1], im[0]), m17n.list_input_methods ())
+	else:
+		for m in args:
+			lang, names = m.split (":")
+			for name in names.split (","):
+				methods.append ((lang, name))
 
-	launch_engine ()
+	launch_engine (methods)
 
 if __name__ == "__main__":
 	main ()

@@ -19,8 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-from ibus import interface
+import sys
 import m17n
+from ibus import interface
 import engine
 
 FACTORY_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Factory"
@@ -33,10 +34,9 @@ class EngineFactory (interface.IEngineFactory):
 	def __init__ (self, lang, name, dbusconn):
 		self._engine_name = name
 		self._lang = lang
-		self._object_path = FACTORY_PATH % (lang, name)
+		self._object_path = FACTORY_PATH % (lang, name.replace("-", "_"))
 		
 		interface.IEngineFactory.__init__ (self, dbusconn, object_path = self._object_path)
-		
 		self._im = m17n.MInputMethod (lang, name)
 		
 		self._icon = "ibus-m17n"

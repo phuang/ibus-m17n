@@ -60,7 +60,7 @@ m17n.py m17n_wrap.c: m17n.i
 	$(SWIG) -python -I/usr/include -o m17n_wrap.c $(srcdir)/m17n.i
 
 test: all
-	$(ENV) PYTHONPATH=$(builddir)/.libs $(PYTHON) $(srcdir)/main.py
+	$(ENV) PYTHONPATH=$(builddir)/.libs $(PYTHON) $(srcdir)/main.py $(TEST_ARGS)
 
 EXTRA_DIST = \
 	m17n.i \

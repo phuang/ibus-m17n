@@ -54,19 +54,55 @@ class Engine (interface.IEngine):
 		self._ic.set_callback (m17n.Minput_get_surrounding_text.name (), self._input_get_surrounding_text_cb)
 		self._ic.set_callback (m17n.Minput_delete_surrounding_text.name (), self._input_delete_surrounding_text_cb)
 
-		self._lookup_table = ibus.LookupTable ()
+		self._lookup_table = ibus.LookupTable (page_size = 10)
 
-	def _input_preedit_start_cb (self, command): pass
-	def _input_preedit_done_cb (self, command): pass
-	def _input_preedit_draw_cb (self, command): pass
+	def _input_preedit_start_cb (self, command):
+		pass
 	
-	def _input_states_start_cb (self, command): pass
-	def _input_states_done_cb (self, command): pass
-	def _input_states_draw_cb (self, command): pass
+	def _input_preedit_done_cb (self, command):
+		pass
+
+	def _input_preedit_draw_cb (self, command):
+		attrs = ibus.AttrList ()
+		preedit = unicode (self._ic.preedit, "utf8")
+		attrs.append (ibus.AttributeBackground (ibus.RGB (0, 0, 0), 0, len (preedit)))
+		attrs.append (ibus.AttributeForeground (ibus.RGB (255, 255, 255), 0, len (preedit)))
+		self.UpdatePreedit (preedit, attrs.to_dbus_value (), self._ic.cursor_pos, len (preedit) > 0)
 	
-	def _input_candidates_start_cb (self, command): pass
-	def _input_candidates_done_cb (self, command): pass
-	def _input_candidates_draw_cb (self, command): pass
+	def _input_states_start_cb (self, command):
+		print command, self._ic.status
+	def _input_states_done_cb (self, command):
+		print command, self._ic.status
+	def _input_states_draw_cb (self, command):
+		print command, self._ic.status
+	
+	def _input_candidates_start_cb (self, command):
+		self._lookup_table.clean ()
+		self.UpdateLookupTable (self._lookup_table.to_dbus_value (), False)
+	
+	def _input_candidates_done_cb (self, command):
+		self._lookup_table.clean ()
+		self.UpdateLookupTable (self._lookup_table.to_dbus_value (), False)
+		
+	def _input_candidates_draw_cb (self, command):
+		print "====================================="
+		self._lookup_table.clean ()
+
+		m17n_candidates = self._ic.candidates
+		if not m17n_candidates:
+			self.UpdateLookupTable (self._lookup_table.to_dbus_value (), False)
+			return
+
+		for group in m17n_candidates:
+			print "gggggggggggggggggggg"
+			if not isinstance (group, list):
+				group = group.decode ("utf8")
+			for c in group:
+				print c
+				self._lookup_table.append_candidate (c)
+		print self._ic.candidate_index
+		self._lookup_table.set_cursor_pos (self._ic.candidate_index)
+		self.UpdateLookupTable (self._lookup_table.to_dbus_value (), self._ic.candidates_show)
 
 	def _input_set_spot_cb (self, command): pass
 	def _input_toggle_cb (self, command): pass
@@ -76,10 +112,10 @@ class Engine (interface.IEngine):
 	def _input_delete_surrounding_text_cb (self, command): pass
 
 	def _page_up (self):
-		pass
+		return self._m17n_process_key ("Up")
 
 	def _page_down (self):
-		pass
+		return self._m17n_process_key ("Down")
 
 	def _cursor_up (self):
 		pass
@@ -87,21 +123,28 @@ class Engine (interface.IEngine):
 	def _cursor_down (self):
 		pass
 
+	def _m17n_process_key (self, key):
+		if self._ic.filter (key) != 0:
+			return True
+
+		text = self._ic.lookup (key)
+
+		if text == None:
+			return False
+
+		if text:
+			self.CommitString (text)
+
+		return True
+		
+
 	def _process_key_event (self, keyval, is_press, state):
 		if not is_press:
 			return False
 
-		key = chr (keyval)
-		ret = self._ic.filter (key)
-		
-		if ret:
-			return True
+		key = keysyms.keycode_to_name (keyval)
 
-		lookup = self._ic.lookup (key)
-		if lookup:
-			self.CommitString (lookup)
-
-		return True
+		return self._m17n_process_key (key)
 
 	def _property_activate (self, prop_name, state):
 		pass

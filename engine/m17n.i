@@ -23,13 +23,10 @@
 %{
  /* Put header files here or function declarations like below */
 #include <m17n.h>
-static PyObject * _ic_dict = NULL;
-
 %}
 
 %init %{
     M17N_INIT ();
-    _ic_dict = PyDict_New ();
 %}
 
 %{
@@ -82,26 +79,37 @@ MInputContext *
 _create_ic (MInputMethod *im)
 {
     MInputContext *ic = minput_create_ic (im, NULL);
-    PyDict_SetItem (_ic_dict,  PyInt_FromLong ((unsigned long) ic), PyDict_New ());
+    mplist_add (ic->plist, msymbol ("PythonDict"), PyDict_New ());
     return ic;
 }
 
 void
 _destroy_ic (MInputContext *ic)
 {
+    MPlist *p = NULL;
+    PyObject *dict = NULL;
+    p = mplist_find_by_key (ic->plist,  msymbol ("PythonDict"));
+    if (p) {
+        dict = (PyObject *)mplist_value (p);
+    }
+
     minput_destroy_ic (ic);
-    PyDict_DelItem (_ic_dict, PyInt_FromLong ((unsigned long) ic));
+    Py_XDECREF (dict);
 }
 
 void
 _im_callback (MInputContext *ic, MSymbol command)
 {
+    MPlist *p = NULL;
     PyObject *_dict = NULL;
     PyObject *_callback = NULL;
     PyObject *_command = NULL;
 
-    _dict = PyDict_GetItem (_ic_dict, PyInt_FromLong ((unsigned long)ic));
-    
+    p = mplist_find_by_key (ic->plist,  msymbol ("PythonDict"));
+    if (p) {
+        _dict = (PyObject *)mplist_value (p);
+    }
+
     if (_dict == NULL)
         return;
 
@@ -188,7 +196,6 @@ _im_callback (MInputContext *ic, MSymbol command)
      
     for (group = $1; mplist_key (group) != Mnil; group = mplist_next (group)) {
         if (mplist_key (group) == Mtext) {
-            fprintf (stderr, "Mtext\n");
             MText *text = (MText *) mplist_value (group);
             
             if (bufsize < mtext_len (text) * 6) {
@@ -202,10 +209,9 @@ _im_callback (MInputContext *ic, MSymbol command)
             PyList_Append (list, PyString_FromString (buf));
         }
         else {
-            fprintf (stderr, "MPlist\n");
-            
             PyObject *l = PyList_New (0);
             MPlist *p = (MPlist *)mplist_value (group);
+            
             for (; mplist_key (p) != Mnil; p = mplist_next (p)) {
                 MText *text = (MText *) mplist_value (p);
                 
@@ -329,19 +335,23 @@ struct MInputContext {};
         minput_reset_ic (self);
     }
 
-    void set_callback (MSymbol name, PyInputFunc func) {
+    void set_callback (MSymbol command, PyInputFunc func) {
+        MPlist *p;
         PyObject *callbacks = NULL;
-        char *_name = NULL;
+        char *_command = NULL;
 
         if (PyCallable_Check (func) == 0)
             return;
+        p = mplist_find_by_key (self->plist,  msymbol ("PythonDict"));
+        if (p) {
+            callbacks = (PyObject *)mplist_value (p);
+        }
 
-        _name = msymbol_name (name);
-        callbacks = PyDict_GetItem (_ic_dict, PyInt_FromLong ((unsigned long)self));
+        _command = msymbol_name (command);
 
-        PyDict_SetItem (callbacks, PyString_FromString (_name), func);
+        PyDict_SetItem (callbacks, PyString_FromString (_command), func);
 
-        mplist_put (self->im->driver.callback_list, name, (void *)_im_callback);
+        mplist_put (self->im->driver.callback_list, command, (void *)_im_callback);
 
     }
 
@@ -411,7 +421,6 @@ IMList *list_input_methods ();
 MText *minput_get_description (MSymbol lang, MSymbol name);
 MText *minput_get_title (MSymbol lang, MSymbol name);
 MText *minput_get_icon (MSymbol lang, MSymbol name);
-
 %rename (MSymbol) MSymbolStruct;
 struct MSymbolStruct {};
 typedef struct MSymbolStruct *MSymbol;
