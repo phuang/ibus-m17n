@@ -36,6 +36,7 @@ class Engine (interface.IEngine):
 		self._dbusconn = dbusconn
 		self._ic = ic
 
+		# setup preedit callbacks
 		self._ic.set_callback (m17n.Minput_preedit_start,
 					self._input_preedit_start_cb)
 		self._ic.set_callback (m17n.Minput_preedit_done,
@@ -43,6 +44,7 @@ class Engine (interface.IEngine):
 		self._ic.set_callback (m17n.Minput_preedit_draw,
 					self._input_preedit_draw_cb)
 
+		# setup status callbacks
 		self._ic.set_callback (m17n.Minput_status_start,
 					self._input_states_start_cb)
 		self._ic.set_callback (m17n.Minput_status_done,
@@ -50,6 +52,7 @@ class Engine (interface.IEngine):
 		self._ic.set_callback (m17n.Minput_status_draw,
 					self._input_states_draw_cb)
 
+		# setup candidates callbacks
 		self._ic.set_callback (m17n.Minput_candidates_start,
 					self._input_candidates_start_cb)
 		self._ic.set_callback (m17n.Minput_candidates_done,
@@ -57,6 +60,7 @@ class Engine (interface.IEngine):
 		self._ic.set_callback (m17n.Minput_candidates_draw,
 					self._input_candidates_draw_cb)
 
+		# setup other callbacks
 		self._ic.set_callback (m17n.Minput_set_spot,
 					self._input_set_spot_cb)
 		self._ic.set_callback (m17n.Minput_toggle,
@@ -64,6 +68,7 @@ class Engine (interface.IEngine):
 		self._ic.set_callback (m17n.Minput_reset,
 					self._input_reset_cb)
 
+		# setup surrounding text callbacks
 		self._ic.set_callback (m17n.Minput_get_surrounding_text,
 					self._input_get_surrounding_text_cb)
 		self._ic.set_callback (m17n.Minput_delete_surrounding_text,
@@ -72,17 +77,20 @@ class Engine (interface.IEngine):
 		self._lookup_table = ibus.LookupTable (page_size = 10)
 
 	def _input_preedit_start_cb (self, command):
-		pass
+		print command
 
 	def _input_preedit_done_cb (self, command):
-		pass
+		print command
 
 	def _input_preedit_draw_cb (self, command):
 		attrs = ibus.AttrList ()
-		preedit = unicode (self._ic.preedit, "utf8")
-		attrs.append (ibus.AttributeBackground (ibus.RGB (0, 0, 0), 0, len (preedit)))
-		attrs.append (ibus.AttributeForeground (ibus.RGB (255, 255, 255), 0, len (preedit)))
-		self.UpdatePreedit (preedit, attrs.to_dbus_value (), self._ic.cursor_pos, len (preedit) > 0)
+		preedit_len = len (self._ic.preedit)
+		attrs.append (ibus.AttributeBackground (ibus.RGB (0, 0, 0), 0, preedit_len))
+		attrs.append (ibus.AttributeForeground (ibus.RGB (255, 255, 255), 0, preedit_len))
+		self.UpdatePreedit (self._ic.preedit,
+				attrs.to_dbus_value (),
+				self._ic.cursor_pos,
+				preedit_len > 0)
 
 	def _input_states_start_cb (self, command):
 		print command, self._ic.status
@@ -117,8 +125,6 @@ class Engine (interface.IEngine):
 			return
 
 		for group in m17n_candidates:
-			if not isinstance (group, list):
-				group = group.decode ("utf8")
 			for c in group:
 				self._lookup_table.append_candidate (c)
 
@@ -134,12 +140,17 @@ class Engine (interface.IEngine):
 				ibus.AttrList ().to_dbus_value (),
 				self._ic.candidates_show)
 
-	def _input_set_spot_cb (self, command): pass
-	def _input_toggle_cb (self, command): pass
-	def _input_reset_cb (self, command): pass
+	def _input_set_spot_cb (self, command):
+		print command
+	def _input_toggle_cb (self, command):
+		print command
+	def _input_reset_cb (self, command):
+		print command
 
-	def _input_get_surrounding_text_cb (self, command): pass
-	def _input_delete_surrounding_text_cb (self, command): pass
+	def _input_get_surrounding_text_cb (self, command):
+		print command
+	def _input_delete_surrounding_text_cb (self, command):
+		print command
 
 	def _page_up (self):
 		return self._m17n_process_key ("Up")

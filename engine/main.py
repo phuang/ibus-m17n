@@ -71,7 +71,7 @@ def print_help (out, v = 0):
 def list_m17n_ims ():
 	print "list all m17n input methods:"
 	print "\tlang\tname -- title"
-	for name, lang in m17n.list_input_methods ():
+	for name, lang in m17n.minput_list_input_methods ():
 		print "\t%s\t%s -- %s" % (lang, name, m17n.minput_get_title (lang, name))
 	sys.exit (0)
 

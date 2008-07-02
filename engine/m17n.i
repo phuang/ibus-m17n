@@ -21,7 +21,6 @@
 
 %module m17n
 %{
- /* Put header files here or function declarations like below */
 #include <m17n.h>
 %}
 
@@ -29,22 +28,44 @@
     M17N_INIT ();
 %}
 
+/* inline c functions */
 %{
-typedef MPlist IMList;
-typedef MPlist *CandidateList;
-typedef PyObject *PyInputFunc;
 
-/* 
+/*
  * List all input methods
  */
-IMList *
-list_input_methods () {
+PyObject *
+minput_list_input_methods () {
+    PyObject *result = NULL;
     MPlist *imlist;
+    MPlist *elm;
+
     imlist = mdatabase_list(msymbol("input-method"), Mnil, Mnil, Mnil);
-    return (IMList *) imlist;
+
+    result = PyList_New (0);
+
+    for (elm = imlist; elm && mplist_key(elm) != Mnil; elm = mplist_next(elm)) {
+        MDatabase *mdb = (MDatabase *) mplist_value(elm);
+        MSymbol *tag = mdatabase_tag(mdb);
+        if (tag[1] != Mnil && tag[2] != Mnil) {
+            const char *im_lang = msymbol_name (tag[1]);
+            const char *im_name = msymbol_name (tag[2]);
+
+            if (im_lang && strlen (im_lang) && im_name && strlen (im_name)) {
+                PyObject *lang = PyString_FromString (im_lang);
+                PyObject *name = PyString_FromString (im_name);
+                PyObject *im_info = PyTuple_New (2);
+                PyTuple_SetItem (im_info, 0, name);
+                PyTuple_SetItem (im_info, 1, lang);
+                PyList_Append (result, im_info);
+                Py_DECREF (im_info);
+            }
+        }
+    }
+    return result;
 }
 
-/* 
+/*
  * Get title of an input method
  */
 MText *
@@ -59,7 +80,7 @@ minput_get_title (MSymbol lang, MSymbol name)
     return NULL;
 }
 
-/* 
+/*
  * Get icon of an input method
  */
 MText *
@@ -75,6 +96,9 @@ minput_get_icon (MSymbol lang, MSymbol name)
     return NULL;
 }
 
+/*
+ * Create an input context
+ */
 MInputContext *
 _create_ic (MInputMethod *im)
 {
@@ -83,6 +107,10 @@ _create_ic (MInputMethod *im)
     return ic;
 }
 
+
+/*
+ * Destroy an input context
+ */
 void
 _destroy_ic (MInputContext *ic)
 {
@@ -97,7 +125,10 @@ _destroy_ic (MInputContext *ic)
     Py_XDECREF (dict);
 }
 
-void
+/*
+ * input method callback function
+ */
+static void
 _im_callback (MInputContext *ic, MSymbol command)
 {
     MPlist *p = NULL;
@@ -128,22 +159,34 @@ _im_callback (MInputContext *ic, MSymbol command)
 
 %}
 
-/* define typemap MSymbol */
+/* define exception */
+%exception {
+    $action
+    if (PyErr_Occurred ()) {
+        return NULL;
+    }
+}
 
+
+/* define typemap MSymbol */
 %typemap (in) MSymbol {
-    if ($input == Py_None)
-        $1 = Mnil;
+    if (PyString_Check ($input)) {
+        $1 = msymbol (PyString_AsString ($input));
+    }
+    else if (PyUnicode_Check ($input)) {
+        PyObject *utf8_str = PyUnicode_AsUTF8String ($input);
+        $1 = msymbol (PyString_AsString (utf8_str));
+        Py_XDECREF (utf8_str);
+    }
     else {
-        if (PyString_Check ($input)) {
-            $1 = msymbol (PyString_AsString ($input));
-        }
+        void *p;
+        if (SWIG_ConvertPtr ($input, &p,
+                SWIGTYPE_p_MSymbolStruct, 0) == SWIG_OK)
+            $1 = (MSymbol)p;
         else {
-            void *p;
-            if (SWIG_ConvertPtr ($input, &p,
-                    SWIGTYPE_p_MSymbolStruct, 0) == SWIG_OK)
-                $1 = (MSymbol)p;
-            else
-                $1 = NULL;
+            PyErr_SetString (PyExc_TypeError,
+                "arg must be string or MSymbol");
+            return NULL;
         }
     }
 }
@@ -158,120 +201,42 @@ _im_callback (MInputContext *ic, MSymbol command)
     }
 }
 
-/* define typemap MText * */
-%typemap (argout) MText * OUTPUT {
-    PyObject * text;
-    if ($1) {
-        MConverter *utf8_converter;
-        int bufsize;
-        char *buf;
-        
-        utf8_converter = mconv_buffer_converter (msymbol ("utf8"), NULL, 0);
-        bufsize = mtext_len ($1) * 6;
-        buf = (char *)PyMem_Malloc (bufsize);
-        
-        mconv_rebind_buffer (utf8_converter, buf, bufsize);
-        mconv_encode (utf8_converter, $1);
-        buf[utf8_converter->nbytes] = 0;
-        m17n_object_unref ($1);
-        
-        text = PyString_FromString (buf);
-        
-        PyMem_Free (buf);
-        mconv_free_converter (utf8_converter);
-    }
-    else {
-        PY_INCREF (Py_None);
-        text = Py_None;
-    }
 
-    $result = SWIG_AppendOutput ($result, text);
+/* define typemap PyObject * */
+%typemap (out) PyObject * {
+    $result = $1;
 }
 
-/* define typemap MText * */
-%typemap (out) CandidateList {
-    PyObject *list = PyList_New (0);
-
-    MPlist *group;
-    MConverter *utf8_converter;
-    int bufsize;
-    char *buf;
-
-    if (! $1) {
-        $result = list;
-        return;
-    }
-    
-    bufsize = 64;
-    buf = PyMem_Malloc (bufsize);
-    utf8_converter = mconv_buffer_converter (msymbol ("utf8"), NULL, 0);
-     
-    for (group = $1; mplist_key (group) != Mnil; group = mplist_next (group)) {
-        if (mplist_key (group) == Mtext) {
-            MText *text = (MText *) mplist_value (group);
-            
-            if (bufsize < mtext_len (text) * 6) {
-                bufsize = mtext_len (text) * 6;
-                buf = PyMem_Realloc (buf, bufsize);
-            }
-            
-            mconv_rebind_buffer (utf8_converter, buf, bufsize);
-            mconv_encode (utf8_converter, text);
-            buf[utf8_converter->nbytes] = 0;
-            PyList_Append (list, PyString_FromString (buf));
-        }
-        else {
-            PyObject *l = PyList_New (0);
-            MPlist *p = (MPlist *)mplist_value (group);
-            
-            for (; mplist_key (p) != Mnil; p = mplist_next (p)) {
-                MText *text = (MText *) mplist_value (p);
-                
-                if (bufsize < mtext_len (text) * 6) {
-                    bufsize = mtext_len (text) * 6;
-                    buf = PyMem_Realloc (buf, bufsize);
-                }
-                
-                mconv_rebind_buffer (utf8_converter, buf, bufsize);
-                mconv_encode (utf8_converter, text);
-                buf[utf8_converter->nbytes] = 0;
-                PyList_Append (l, PyString_FromString (buf));
-            }
-            PyList_Append (list, l);
-        }
-    }
-
-    mconv_free_converter (utf8_converter);
-    PyMem_Free (buf);
-    
-    $result = list;
-
-}
-/* define typemap PyInputFunc */
-%typemap (in) PyInputFunc {
+/* define typemap PyObject * */
+%typemap (in) PyObject * {
     $1 = $input;
 }
 
-%typemap (in, numinputs = 0) MText * OUTPUT (MText * temp = mtext ());
 %typemap (out) MText * {
+
     if ($1) {
-        MConverter *utf8_converter;
+        MConverter *converter;
         int bufsize;
-        char *buf;
-        
-        utf8_converter = mconv_buffer_converter (msymbol ("utf8"), NULL, 0);
-        bufsize = mtext_len ($1) * 6;
-        buf = (char *)PyMem_Malloc (bufsize);
-        
-        mconv_rebind_buffer (utf8_converter, buf, bufsize);
-        mconv_encode (utf8_converter, $1);
-        buf[utf8_converter->nbytes] = 0;
+        Py_UNICODE *buf;
+
+#if Py_UNICODE_SIZE == 2
+        converter = mconv_buffer_converter (Mcoding_utf_16, NULL, 0);
+#else
+        converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
+#endif
+
+        bufsize = mtext_len ($1) * 6 + 6;
+        buf = (Py_UNICODE *)PyMem_Malloc (bufsize);
+
+        mconv_rebind_buffer (converter, (char *)buf, bufsize);
+        mconv_encode (converter, $1);
         m17n_object_unref ($1);
-        
-        $result = PyString_FromString (buf);
-        
+
+        buf [converter->nchars + 1] = 0;
+        $result = PyUnicode_FromUnicode (buf + 1, converter->nchars);
+
         PyMem_Free (buf);
-        mconv_free_converter (utf8_converter);
+        mconv_free_converter (converter);
     }
     else {
         Py_INCREF (Py_None);
@@ -279,37 +244,21 @@ _im_callback (MInputContext *ic, MSymbol command)
     }
 }
 
-/* define typemap IMList * */
-%typemap(out) IMList * {
-    $result = PyList_New (0);
-    MPlist *elm;
-    for (elm = $1; elm && mplist_key(elm) != Mnil; elm = mplist_next(elm)) {
-        MDatabase *mdb = (MDatabase *) mplist_value(elm);
-        MSymbol *tag = mdatabase_tag(mdb);
-        if (tag[1] != Mnil && tag[2] != Mnil) {
-            const char *im_lang = msymbol_name (tag[1]);
-            const char *im_name = msymbol_name (tag[2]);
-            
-            if (im_lang && strlen (im_lang) && im_name && strlen (im_name)) {
-                PyObject *lang = PyString_FromString (im_lang);
-                PyObject *name = PyString_FromString (im_name);
-                PyObject *im_info = PyTuple_New (2);
-                PyTuple_SetItem (im_info, 0, name);
-                PyTuple_SetItem (im_info, 1, lang);
-                PyList_Append ($result, im_info);
-                Py_DECREF (im_info);
-            }
-        }
-    }
-}
+
 
 /* define MInputMethod structure */
 struct MInputMethod {};
 %extend MInputMethod {
     MInputMethod (MSymbol lang, MSymbol name) {
-        return minput_open_im (lang, name, NULL);
+        MInputMethod *im = minput_open_im (lang, name, NULL);
+        if (im == NULL) {
+            PyErr_Format (PyExc_RuntimeError,
+                "m17n does not have engine %s-%s",
+                msymbol_name (lang), msymbol_name (name));
+        }
+        return im;
     }
-    
+
     MInputContext *create_ic () {
         return _create_ic (self);
     }
@@ -326,16 +275,31 @@ struct MInputContext {};
     MInputContext (MInputMethod *im) {
         return _create_ic (im);
     }
-        
+
     ~MInputContext () {
         _destroy_ic (self);
     }
 
-    int filter (MSymbol key) {
+    int
+    filter (MSymbol key) {
+        if (key == NULL) {
+            PyErr_SetString (PyExc_TypeError,
+                "Argumet 2 of filter must be a MSymbol.");
+            return;
+        }
+
         return minput_filter (self, key, NULL);
     }
 
-    MText *lookup (MSymbol key) {
+    MText *
+    lookup (MSymbol key) {
+
+        if (key == NULL) {
+            PyErr_SetString (PyExc_TypeError,
+                "Argumet 2 of lookup must be a MSymbol.");
+            return;
+        }
+
         MText *text = mtext ();
         if (minput_lookup (self, key, NULL, text) == 0)
             return text;
@@ -343,45 +307,63 @@ struct MInputContext {};
         return NULL;
     }
 
-    void reset () {
+    void
+    reset () {
         minput_reset_ic (self);
     }
 
-    void set_callback (MSymbol command, PyInputFunc func) {
-        MPlist *p;
-        PyObject *callbacks = NULL;
-        char *_command = NULL;
+    void set_callback (MSymbol command, PyObject *func) {
 
-        if (PyCallable_Check (func) == 0)
+        MPlist *p;
+        PyObject *callbacks_dict = NULL;
+        char *c_str = NULL;
+
+        if (command == NULL) {
+            PyErr_SetString (PyExc_TypeError,
+                "Argumet 2 of set_callback must be a MSymbol.");
             return;
-        p = mplist_find_by_key (self->plist,  msymbol ("PythonDict"));
-        if (p) {
-            callbacks = (PyObject *)mplist_value (p);
         }
 
-        _command = msymbol_name (command);
+        if (func != Py_None && !PyCallable_Check (func)) {
+            PyErr_SetString (PyExc_TypeError,
+                "Argumet 3 of set_callback must be a callable object.");
+            return;
+        }
 
-        PyDict_SetItem (callbacks, PyString_FromString (_command), func);
+        p = mplist_find_by_key (self->plist,  msymbol ("PythonDict"));
+        if (p) {
+            callbacks_dict = (PyObject *)mplist_value (p);
+        }
+
+        c_str = msymbol_name (command);
+
+        if (func != Py_None) {
+            PyDict_SetItem (callbacks_dict, PyString_FromString (c_str), func);
+        }
+        else {
+            PyDict_DelItem (callbacks_dict, PyString_FromString (c_str));
+        }
 
         mplist_put (self->im->driver.callback_list, command, (void *)_im_callback);
-
     }
 
+    /* define properties */
     %immutable;
 
     MText *status;
-    
+
     MText *preedit;
     int cursor_pos;
 
-    CandidateList candidates;
-    
+    PyObject *candidates;
+
     int candidate_index;
     int candidate_from;
     int candidate_to;
     int candidates_show;
+
     %mutable;
-    
+
     %{
         MText *
         MInputContext_status_get (MInputContext *self) {
@@ -394,54 +376,123 @@ struct MInputContext {};
             m17n_object_ref (self->preedit);
             return self->preedit;
         }
-        
+
         int
         MInputContext_cursor_pos_get (MInputContext *self) {
             return self->cursor_pos;
         }
-        
+
         int
         MInputContext_candidate_index_get (MInputContext *self) {
             return self->candidate_index;
         }
-        
+
         int
         MInputContext_candidate_from_get (MInputContext *self) {
             return self->candidate_from;
         }
-        
+
         int
         MInputContext_candidate_to_get (MInputContext *self) {
             return self->candidate_to;
         }
-        
+
         int
         MInputContext_candidates_show_get (MInputContext *self) {
             return self->candidate_show != 0;
         }
 
-        CandidateList
+        PyObject *
         MInputContext_candidates_get (MInputContext *self) {
-            return self->candidate_list;
+
+            PyObject *list;
+            MPlist *group;
+            MConverter *converter;
+            int bufsize;
+            Py_UNICODE *buf;
+
+            list = PyList_New (0);
+
+            if (self->candidate_list == NULL)
+                return list;
+
+            bufsize = 64;
+            buf = (Py_UNICODE *)PyMem_Malloc (bufsize);
+
+        #if Py_UNICODE_SIZE == 2
+            converter = mconv_buffer_converter (Mcoding_utf_16, NULL, 0);
+        #else
+            converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
+        #endif
+
+            for (group = self->candidate_list;
+                mplist_key (group) != Mnil;
+                group = mplist_next (group)) {
+                if (mplist_key (group) == Mtext) {
+                    MText *text = (MText *) mplist_value (group);
+
+                    /* check buffer size */
+                    if (bufsize < mtext_len (text) * 6 + 6) {
+                        bufsize = mtext_len (text) * 6 + 6;
+                        buf = (Py_UNICODE *)PyMem_Realloc (buf, bufsize);
+                    }
+
+                    /* convert buffer */
+                    mconv_rebind_buffer (converter, (char *)buf, bufsize);
+                    mconv_encode (converter, text);
+                    buf[converter->nchars + 1] = 0;
+                    PyList_Append (list, PyUnicode_FromUnicode(buf + 1, converter->nchars));
+                }
+                else {
+                    PyObject *l = PyList_New (0);
+                    MPlist *p = (MPlist *)mplist_value (group);
+
+                    for (; mplist_key (p) != Mnil; p = mplist_next (p)) {
+                        MText *text = (MText *) mplist_value (p);
+
+                        /* check buffer size */
+                        if (bufsize < mtext_len (text) * 6 + 6) {
+                            bufsize = mtext_len (text) * 6 + 6;
+                            buf = (Py_UNICODE *)PyMem_Realloc (buf, bufsize);
+                        }
+
+                        /* copnvert buffer */
+                        mconv_rebind_buffer (converter, (char *)buf, bufsize);
+                        mconv_encode (converter, text);
+                        buf[converter->nchars + 1] = 0;
+                        PyList_Append (l, PyUnicode_FromUnicode(buf + 1, converter->nchars));
+                    }
+                    PyList_Append (list, l);
+                }
+            }
+
+            mconv_free_converter (converter);
+            PyMem_Free (buf);
+
+            return list;
+
         }
- 
+
     %}
 }
 
-
-IMList *list_input_methods ();
+/* define minput functions */
+PyObject *minput_list_input_methods ();
 MText *minput_get_description (MSymbol lang, MSymbol name);
 MText *minput_get_title (MSymbol lang, MSymbol name);
 MText *minput_get_icon (MSymbol lang, MSymbol name);
 
+/* define MSymbol structure */
 %rename (MSymbol) MSymbolStruct;
 struct MSymbolStruct {};
 typedef struct MSymbolStruct *MSymbol;
 %extend MSymbolStruct {
     MSymbolStruct (const char *name) {
+        if (name == NULL)
+            return Mnil;
         return msymbol (name);
     }
-    
+
     char *name () {
         return msymbol_name (self);
     }
@@ -458,6 +509,8 @@ typedef struct MSymbolStruct *MSymbol;
     }
 };
 
+
+/* define some constant values */
 %immutable;
 extern MSymbol Mnil;
 extern MSymbol Mt;
@@ -480,3 +533,4 @@ extern MSymbol Minput_reset;
 extern MSymbol Minput_get_surrounding_text;
 extern MSymbol Minput_delete_surrounding_text;
 %mutable;
+

@@ -103,3 +103,7 @@ eng._process_key_event (ord('g'), 1, 0)
 eng._process_key_event (ord(' '), 1, 0)
 
 
+print m17n.Mnil
+m17n.MInputMethod (None, None)
+m17n.MInputMethod ("", None)
+
