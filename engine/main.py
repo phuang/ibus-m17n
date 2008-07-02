@@ -104,7 +104,7 @@ def main ():
 		if os.fork ():
 			sys.exit ()
 	if all_methods:
-		methods = map (lambda im: (im[1], im[0]), m17n.list_input_methods ())
+		methods = map (lambda im: (im[1], im[0]), m17n.minput_list_ims ())
 	else:
 		for m in args:
 			lang, names = m.split (":")
