@@ -9,15 +9,15 @@ class Engine:
 		self._ic.set_callback (m17n.Minput_preedit_start.name (), self._input_preedit_start_cb)
 		self._ic.set_callback (m17n.Minput_preedit_done.name (), self._input_preedit_done_cb)
 		self._ic.set_callback (m17n.Minput_preedit_draw.name (), self._input_preedit_draw_cb)
-		
+
 		self._ic.set_callback (m17n.Minput_status_start.name (), self._input_states_start_cb)
 		self._ic.set_callback (m17n.Minput_status_done.name (), self._input_states_done_cb)
 		self._ic.set_callback (m17n.Minput_status_draw.name (), self._input_states_draw_cb)
-		
+
 		self._ic.set_callback (m17n.Minput_candidates_start.name (), self._input_candidates_start_cb)
 		self._ic.set_callback (m17n.Minput_candidates_done.name (), self._input_candidates_done_cb)
 		self._ic.set_callback (m17n.Minput_candidates_draw.name (), self._input_candidates_draw_cb)
-		
+
 		self._ic.set_callback (m17n.Minput_set_spot.name (), self._input_set_spot_cb)
 		self._ic.set_callback (m17n.Minput_toggle.name (), self._input_toggle_cb)
 		self._ic.set_callback (m17n.Minput_reset.name (), self._input_reset_cb)
@@ -32,14 +32,14 @@ class Engine:
 		print >> sys.stderr, command
 	def _input_preedit_draw_cb (self, command):
 		print >> sys.stderr, command, self._ic.preedit
-	
+
 	def _input_states_start_cb (self, command):
 		print >> sys.stderr, command
 	def _input_states_done_cb (self, command):
 		print >> sys.stderr, command
 	def _input_states_draw_cb (self, command):
 		print >> sys.stderr, command, self._ic.status
-	
+
 	def _input_candidates_start_cb (self, command):
 		print >> sys.stderr, command
 	def _input_candidates_done_cb (self, command):
@@ -83,7 +83,7 @@ class Engine:
 			symbol = "space"
 		self._ic.filter (symbol)
 		lookup = self._ic.lookup (symbol)
-		print >> sys.stderr, "lookup = \"%s|%s\"" % (lookup, type (lookup))
+		print >> sys.stderr, "lookup = \"(%s | %s)\"" % (lookup, type (lookup))
 		# ignore key release events
 
 		return True
@@ -102,8 +102,14 @@ eng._process_key_event (ord('n'), 1, 0)
 eng._process_key_event (ord('g'), 1, 0)
 eng._process_key_event (ord(' '), 1, 0)
 
+try:
+	m17n.MInputMethod (None, None)
+except Exception, e:
+	print e
 
-print m17n.Mnil
-m17n.MInputMethod (None, None)
-m17n.MInputMethod ("", None)
+try:
+	im = m17n.MInputMethod ("zh", None)
+	ic = im.create_ic ()
+except Exception, e:
+	print e
 
