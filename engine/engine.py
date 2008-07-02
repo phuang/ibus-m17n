@@ -262,4 +262,7 @@ class Engine (interface.IEngine):
 
 	def Destroy (self):
 		print "Destroy"
+		self.remove_from_connection ()
+		self._dbsuconn = None
+		self._ic = None
 

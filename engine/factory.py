@@ -62,4 +62,11 @@ class EngineFactory (interface.IEngineFactory):
 		ic = self._im.create_ic ()
 		return engine.Engine (ic, self._dbusconn, engine_path)
 
+	def Destroy (self):
+		print "Destroy"
+		self.remove_from_connection ()
+		self._im = None
+		self._dbusconn = None
+
+
 
