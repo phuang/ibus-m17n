@@ -20,22 +20,22 @@
  */
 
 %module m17n
+
 %{
 #include <m17n.h>
 %}
 
-%init %{
+%init {
     M17N_INIT ();
-%}
+}
 
 /* inline c functions */
 %{
-
 /*
  * List all input methods
  */
 PyObject *
-minput_list_input_methods () {
+minput_list_ims () {
     PyObject *result = NULL;
     MPlist *imlist;
     MPlist *elm;
@@ -477,7 +477,7 @@ struct MInputContext {};
 }
 
 /* define minput functions */
-PyObject *minput_list_input_methods ();
+PyObject *minput_list_ims ();
 MText *minput_get_description (MSymbol lang, MSymbol name);
 MText *minput_get_title (MSymbol lang, MSymbol name);
 MText *minput_get_icon (MSymbol lang, MSymbol name);
