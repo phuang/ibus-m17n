@@ -11,8 +11,8 @@ URL:        http://code.google.com/p/ibus/
 Source0:    http://ibus.googlecode.com/files/%{name}-%{version}.tar.gz
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: gettext-devel, libtool, python-devel, pygtk2-devel, perl(XML::Parser) gtk2-devel qt-devel
-Requires:   pygtk2
+BuildRequires: gettext-devel, libtool, python-devel, perl(XML::Parser), swig, m17n-lib-devel, pkgconfig
+Requires:   ibus, m17n-lib
 
 %description
 IBus template project
