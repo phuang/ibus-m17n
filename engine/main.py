@@ -63,9 +63,15 @@ def launch_engine (methods):
 	IMApp (methods).run ()
 
 def print_help (out, v = 0):
-	print >> out, "-h, --help             show this message."
-	print >> out, "-d, --daemonize        daemonize ibus"
-	print >> out, "-l, --list             list all m17n input methods"
+	print >> out, "./ibus-engine-m17n [options] [engines]"
+	print >> out, "\t-h, --help             show this message."
+	print >> out, "\t-d, --daemonize        daemonize ibus engine"
+	print >> out, "\t-l, --list             list all m17n input methods"
+	print >> out, "\t-a, --all              enable all m17n input methods"
+	print >> out, "example:"
+	print >> out, "\t./ibus-engine-m17n zh:py ja:trycode"
+	print >> out, "\t./ibus-engine-m17n zh:py,pinyin hi:inscript"
+	print >> out, "\t./ibus-engine-m17n -a"
 	sys.exit (v)
 
 def list_m17n_ims ():
