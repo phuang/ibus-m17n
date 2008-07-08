@@ -23,6 +23,7 @@ import sys
 import m17n
 from ibus import interface
 import engine
+import gobject
 
 FACTORY_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Factory"
 ENGINE_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Engine/%d"
@@ -30,6 +31,7 @@ ENGINE_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Engine/%d"
 class EngineFactory (interface.IEngineFactory):
 	AUTHORS = "Huang Peng <shawn.p.huang@gmail.com>"
 	CREDITS = "GPLv2"
+	__factory_count = 0
 
 	def __init__ (self, lang, name, dbusconn):
 		self._engine_name = name
@@ -42,6 +44,8 @@ class EngineFactory (interface.IEngineFactory):
 		self._icon = "ibus-m17n"
 		self._dbusconn = dbusconn
 		self._max_engine_id = 1
+
+		EngineFactory.__factory_count += 1
 
 	def get_object_path (self):
 		return self._object_path
@@ -63,10 +67,10 @@ class EngineFactory (interface.IEngineFactory):
 		return engine.Engine (ic, self._dbusconn, engine_path)
 
 	def Destroy (self):
-		print "Destroy"
 		self.remove_from_connection ()
 		self._im = None
 		self._dbusconn = None
-
-
+		EngineFactory.__factory_count -= 1
+		if EngineFactory.__factory_count == 0:
+			sys.exit (0)
 

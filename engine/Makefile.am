@@ -66,6 +66,7 @@ test: all
 EXTRA_DIST = \
 	m17n.i \
 	ibus-engine-m17n.in \
+	gen-engine.py.in \
 	$(NULL)
 
 CLEANFILES = \

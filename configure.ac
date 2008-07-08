@@ -92,6 +92,7 @@ AC_CONFIG_FILES([ po/Makefile.in
 Makefile
 ibus-m17n.spec
 engine/Makefile
+engine/gen-engine.py
 engine/ibus-engine-m17n
 icons/Makefile
 m4/Makefile
