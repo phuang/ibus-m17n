@@ -62,6 +62,8 @@ minput_list_ims () {
             }
         }
     }
+
+    if (imlist) m17n_object_unref (imlist);
     return result;
 }
 
@@ -212,9 +214,13 @@ _im_callback (MInputContext *ic, MSymbol command)
     $1 = $input;
 }
 
-%typemap (out) MText * {
+/* define typemap MText * */
+%{
+static PyObject *
+PyUnicode_FromMText (MText *text) {
+    PyObject *result = NULL;
 
-    if ($1) {
+    if (text) {
         MConverter *converter;
         int bufsize;
         Py_UNICODE *buf;
@@ -225,25 +231,40 @@ _im_callback (MInputContext *ic, MSymbol command)
         converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
 #endif
 
-        bufsize = mtext_len ($1) * 6 + 6;
+        bufsize = mtext_len (text) * 6 + 6;
         buf = (Py_UNICODE *)PyMem_Malloc (bufsize);
 
         mconv_rebind_buffer (converter, (char *)buf, bufsize);
-        mconv_encode (converter, $1);
-        m17n_object_unref ($1);
+        mconv_encode (converter, text);
 
         buf [converter->nchars + 1] = 0;
-        $result = PyUnicode_FromUnicode (buf + 1, converter->nchars);
+        result = PyUnicode_FromUnicode (buf + 1, converter->nchars);
 
         PyMem_Free (buf);
         mconv_free_converter (converter);
     }
     else {
         Py_INCREF (Py_None);
-        $result = Py_None;
+        result = Py_None;
     }
+    return result;
+}
+%}
+
+%typemap (out) MText * {
+    $result = PyUnicode_FromMText ($1);
+    if ($1) m17n_object_unref ($1);
 }
 
+%typemap (argout) MText * OUTPUT {
+    PyObject *o = PyUnicode_FromMText ($1);
+    $result = SWIG_AppendOutput ($result, o);
+    if ($1) m17n_object_unref ($1);
+}
+
+%typemap (in, numinputs = 0) MText * OUTPUT {
+    $1 = mtext ();
+}
 
 
 /* define MInputMethod structure */
@@ -291,8 +312,8 @@ struct MInputContext {};
         return minput_filter (self, key, NULL);
     }
 
-    MText *
-    lookup (MSymbol key) {
+    int
+    lookup (MSymbol key, MText *OUTPUT) {
 
         if (key == NULL) {
             PyErr_SetString (PyExc_TypeError,
@@ -300,11 +321,7 @@ struct MInputContext {};
             return;
         }
 
-        MText *text = mtext ();
-        if (minput_lookup (self, key, NULL, text) == 0)
-            return text;
-        m17n_object_unref (text);
-        return NULL;
+        return minput_lookup (self, key, NULL, OUTPUT);
     }
 
     void

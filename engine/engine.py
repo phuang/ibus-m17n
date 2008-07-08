@@ -152,6 +152,12 @@ class Engine (interface.IEngine):
 	def _input_delete_surrounding_text_cb (self, command):
 		print command
 
+	def _focus_in (self):
+		return self._m17n_process_key ("input-focus-in")
+
+	def _focus_out (self):
+		return self._m17n_process_key ("input-focus-out")
+
 	def _page_up (self):
 		return self._m17n_process_key ("Up")
 
@@ -165,18 +171,17 @@ class Engine (interface.IEngine):
 		return self._m17n_process_key ("Right")
 
 	def _m17n_process_key (self, key):
-		if self._ic.filter (key) != 0:
+		ret = self._ic.filter (key)
+
+		if ret:
 			return True
 
-		text = self._ic.lookup (key)
-
-		if text == None:
-			return False
+		ret, text = self._ic.lookup (key)
 
 		if text:
 			self.CommitString (text)
 
-		return True
+		return ret == 0
 
 	def _keyval_to_symbol (self, keyval, state):
 		mask = 0
@@ -230,10 +235,10 @@ class Engine (interface.IEngine):
 		return False
 
 	def FocusIn (self):
-		print "FocusIn"
+		self._focus_in ()
 
 	def FocusOut (self):
-		print "FocusOut"
+		self._focus_out ()
 
 	def SetCursorLocation (self, x, y, w, h):
 		pass
