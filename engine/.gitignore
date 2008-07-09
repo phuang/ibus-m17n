@@ -2,3 +2,4 @@ m17n.py
 m17n_wrap.c
 ibus-engine-m17n
 *.engine
+gen-engine.py
