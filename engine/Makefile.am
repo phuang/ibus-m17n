@@ -25,7 +25,7 @@ engine_m17n_PYTHON = \
 	test.py \
 	$(NULL)
 
-engine_m17ndir = $(datadir)/ibus/engine/m17n
+engine_m17ndir = $(pkgdatadir)
 
 m17n_DATA = \
 	m17n.py \
@@ -59,10 +59,6 @@ libexec_SCRIPTS = ibus-engine-m17n
 m17n.py m17n_wrap.c: m17n.i
 	$(SWIG) -python -I/usr/include -o m17n_wrap.c $(srcdir)/m17n.i
 
-TEST_ARGS="zh:py"
-test: all
-	$(ENV) PYTHONPATH=$(builddir)/.libs $(PYTHON) $(srcdir)/main.py $(TEST_ARGS)
-
 EXTRA_DIST = \
 	m17n.i \
 	ibus-engine-m17n.in \
@@ -77,3 +73,15 @@ CLEANFILES = \
 
 DISTCLEANFILES = \
 	$(MULL)
+
+
+TEST_ARGS="zh:py"
+test: all
+	$(ENV) PYTHONPATH=$(builddir)/.libs $(PYTHON) $(srcdir)/main.py $(TEST_ARGS)
+
+install-exec-local: gen-engine.py
+	$(MKDIR_P) $(DESTDIR)$(datadir)/ibus/engine
+	$(PYTHON) $(builddir)/gen-engine.py $(DESTDIR)$(datadir)/ibus/engine
+
+uninstall-local:
+	$(RM) $(DESTDIR)$(datadir)/ibus/engine/m17n-*.engine

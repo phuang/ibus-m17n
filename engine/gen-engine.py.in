@@ -1,11 +1,20 @@
+import sys
 import m17n
+
 _exec = "@prefix@/libexec/ibus-engine-m17n %s:%s"
 _icon = "ibus-m17n"
 _author = ""
 _credits = ""
 
+installdir = "."
+
+if len(sys.argv) == 2:
+	installdir = sys.argv[1]
+
+print installdir
+
 for name, lang in m17n.minput_list_ims ():
-	file_name = "m17n.%s.%s.engine" % (lang, name)
+	file_name = "%s/m17n-%s-%s.engine" % (installdir, lang, name)
 	out = file (file_name, "w")
 	print >> out, "Exec=\"%s\"" % (_exec % (lang, name))
 	print >> out, "Name=\"%s\"" % name
@@ -13,3 +22,5 @@ for name, lang in m17n.minput_list_ims ():
 	print >> out, "Icon=\"%s\"" % _icon
 	print >> out, "Author=\"%s\"" % _author
 	print >> out, "Credits=\"%s\"" % _credits
+	out.close ()
+
