@@ -16,11 +16,11 @@ print installdir
 for name, lang in m17n.minput_list_ims ():
 	file_name = "%s/m17n-%s-%s.engine" % (installdir, lang, name)
 	out = file (file_name, "w")
-	print >> out, "Exec=\"%s\"" % (_exec % (lang, name))
-	print >> out, "Name=\"%s\"" % name
-	print >> out, "Lang=\"%s\"" % lang
-	print >> out, "Icon=\"%s\"" % _icon
-	print >> out, "Author=\"%s\"" % _author
-	print >> out, "Credits=\"%s\"" % _credits
+	print >> out, "Exec=%s" % (_exec % (lang, name))
+	print >> out, "Name=%s" % name
+	print >> out, "Lang=%s" % lang
+	print >> out, "Icon=%s" % _icon
+	print >> out, "Author=%s" % _author
+	print >> out, "Credits=%s" % _credits
 	out.close ()
 
