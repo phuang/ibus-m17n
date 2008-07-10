@@ -35,6 +35,16 @@ class Engine (interface.IEngine):
 		interface.IEngine.__init__ (self, dbusconn, object_path)
 		self._dbusconn = dbusconn
 		self._ic = ic
+		self._prop_list = ibus.PropList ()
+
+		# init input mode properties
+		self._status_prop = ibus.Property (name = "status",
+							type = ibus.PROP_TYPE_NORMAL,
+							label = "",
+							tooltip = "m17n status",
+							visible = False)
+
+		self._prop_list.append (self._status_prop)
 
 		# setup preedit callbacks
 		self._ic.set_callback (m17n.Minput_preedit_start,
@@ -97,7 +107,12 @@ class Engine (interface.IEngine):
 	def _input_states_done_cb (self, command):
 		print command, self._ic.status
 	def _input_states_draw_cb (self, command):
-		print command, self._ic.status
+		self._status_prop.set_label (self._ic.status)
+		if self._ic.status:
+			self._status_prop.set_visible (True)
+		else:
+			self._status_prop.set_visible (False)
+		self.UpdateProperty (self._status_prop.to_dbus_value ())
 
 	def _input_candidates_start_cb (self, command):
 		self._lookup_table.clean ()
@@ -153,6 +168,7 @@ class Engine (interface.IEngine):
 		print command
 
 	def _focus_in (self):
+		self.RegisterProperties (self._prop_list.to_dbus_value ())
 		return self._m17n_process_key ("input-focus-in")
 
 	def _focus_out (self):
