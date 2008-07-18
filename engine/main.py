@@ -32,30 +32,30 @@ import gobject
 
 class IMApp:
     def __init__(self, methods):
-        self._loop = gobject.MainLoop()
-        self._dbusconn = dbus.connection.Connection(ibus.IBUS_ADDR)
-        self._dbusconn.add_signal_receiver(self._disconnected_cb,
+        self.__loop = gobject.MainLoop()
+        self.__dbusconn = dbus.connection.Connection(ibus.IBUS_ADDR)
+        self.__dbusconn.add_signal_receiver(self.__disconnected_cb,
                             "Disconnected",
                             dbus_interface = dbus.LOCAL_IFACE)
-        self._ibus = self._dbusconn.get_object(ibus.IBUS_NAME, ibus.IBUS_PATH)
+        self.__ibus = self.__dbusconn.get_object(ibus.IBUS_NAME, ibus.IBUS_PATH)
 
-        self._methods = []
-        self._factories = []
+        self.__methods = []
+        self.__factories = []
         for lang, name in methods:
             try:
-                f = factory.EngineFactory(lang, name, self._dbusconn)
-                self._factories.append(f)
+                f = factory.EngineFactory(lang, name, self.__dbusconn)
+                self.__factories.append(f)
             except Exception, e:
                 print e
-        if self._factories:
-            self._ibus.RegisterFactories(map(lambda f: f.get_object_path(), self._factories), **ibus.DEFAULT_ASYNC_HANDLERS)
+        if self.__factories:
+            self.__ibus.RegisterFactories(map(lambda f: f.get_object_path(), self.__factories), **ibus.DEFAULT_ASYNC_HANDLERS)
 
     def run(self):
-        self._loop.run()
+        self.__loop.run()
 
-    def _disconnected_cb(self):
+    def __disconnected_cb(self):
         print "disconnected"
-        self._loop.quit()
+        self.__loop.quit()
 
 
 def launch_engine(methods):

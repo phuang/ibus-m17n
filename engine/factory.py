@@ -20,57 +20,28 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 import sys
+import ibus
 import m17n
-from ibus import interface
 import engine
-import gobject
 
 FACTORY_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Factory"
-ENGINE_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Engine/%d"
+ENGINE_PATH = "/com/redhat/IBus/engines/m17n/%s/%s/Engine/"
 
-class EngineFactory(interface.IEngineFactory):
+class EngineFactory(ibus.EngineFactoryBase):
     AUTHORS = "Huang Peng <shawn.p.huang@gmail.com>"
     CREDITS = "GPLv2"
-    __factory_count = 0
 
-    def __init__(self, lang, name, dbusconn):
-        self._engine_name = name
-        self._lang = lang
-        self._object_path = FACTORY_PATH % (lang, self._engine_name.replace("-", "_"))
-        
-        super(EngineFactory, self).__init__(dbusconn, object_path = self._object_path)
-        self._im = m17n.MInputMethod(lang, name)
-        
-        self._icon = "ibus-m17n"
-        self._dbusconn = dbusconn
-        self._max_engine_id = 1
+    def __init__(self, lang, name, conn):
+        self.__info = [name, lang, "ibus-m17n", self.AUTHORS, self.CREDITS]
+        self.__im = m17n.MInputMethod(lang, name)
 
-        EngineFactory.__factory_count += 1
+        factory_path = FACTORY_PATH % (lang, name.replace("-", "_"))
+        engine_path = ENGINE_PATH % (lang, name.replace("-", "_"))
+        engine_class = lambda *args, **kargs: engine.Engine (self.__im.create_ic(), *args, **kargs)
+        super(EngineFactory,self).__init__(self.__info, engine_class, engine_path, conn, factory_path)
+
+        self.__factory_path = factory_path
 
     def get_object_path(self):
-        return self._object_path
-    
-    def GetInfo(self):
-        result = [
-            self._engine_name,
-            self._lang,
-            self._icon,
-            self.AUTHORS,
-            self.CREDITS
-            ]
-        return result
-
-    def CreateEngine(self):
-        engine_path = ENGINE_PATH % (self._lang, self._engine_name.replace("-", "_"), self._max_engine_id)
-        self._max_engine_id += 1
-        ic = self._im.create_ic()
-        return engine.Engine(ic, self._dbusconn, engine_path)
-
-    def Destroy(self):
-        self.remove_from_connection()
-        self._im = None
-        self._dbusconn = None
-        EngineFactory.__factory_count -= 1
-        if EngineFactory.__factory_count == 0:
-            sys.exit(0)
+        return self.__factory_path
 
