@@ -146,27 +146,21 @@ class Engine(ibus.EngineBase):
 
     def __input_candidates_start_cb(self, command):
         self.__lookup_table.clean()
-        self.update_lookup_table(self.__lookup_table, False)
-        self.update_aux_string("",
-                ibus.AttrList(),
-                False)
+        self.hide_lookup_table()
+        self.hide_aux_string()
 
     def __input_candidates_done_cb(self, command):
         self.__lookup_table.clean()
-        self.update_lookup_table(self.__lookup_table, False)
-        self.update_aux_string("",
-                ibus.AttrList(),
-                False)
+        self.hide_lookup_table()
+        self.hide_aux_string()
 
     def __input_candidates_draw_cb(self, command):
         self.__lookup_table.clean()
 
         m17n_candidates = self.__ic.candidates
         if not m17n_candidates:
-            self.update_lookup_table(self.__lookup_table, False)
-            self.update_aux_string("",
-                    ibus.AttrList(),
-                    False)
+            self.hide_lookup_table()
+            self.hide_aux_string()
             return
 
         for group in m17n_candidates:
