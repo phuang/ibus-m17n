@@ -32,7 +32,10 @@ class EngineFactory(ibus.EngineFactoryBase):
     CREDITS = "GPLv2"
 
     def __init__(self, lang, name, conn):
-        self.__info = [name, lang, "ibus-m17n", self.AUTHORS, self.CREDITS]
+        icon = m17n.minput_get_icon(lang, name)
+        if not icon:
+            icon = "ibus"
+        self.__info = [name, lang, icon, self.AUTHORS, self.CREDITS]
         self.__im = m17n.MInputMethod(lang, name)
 
         factory_path = FACTORY_PATH % (lang, name.replace("-", "_"))
