@@ -22,9 +22,6 @@
 import os
 import sys
 import getopt
-import dbus
-import dbus.connection
-import dbus.mainloop.glib
 import m17n
 import ibus
 import factory
@@ -33,22 +30,19 @@ import gobject
 class IMApp:
     def __init__(self, methods):
         self.__loop = gobject.MainLoop()
-        self.__dbusconn = dbus.connection.Connection(ibus.IBUS_ADDR)
-        self.__dbusconn.add_signal_receiver(self.__disconnected_cb,
-                            "Disconnected",
-                            dbus_interface = dbus.LOCAL_IFACE)
-        self.__ibus = self.__dbusconn.get_object(ibus.IBUS_NAME, ibus.IBUS_PATH)
+        self.__ibus = ibus.IBus()
+        self.__ibus.call_on_disconnection(self.__disconnected_cb)
 
         self.__methods = []
         self.__factories = []
         for lang, name in methods:
             try:
-                f = factory.EngineFactory(lang, name, self.__dbusconn)
+                f = factory.EngineFactory(lang, name, self.__ibus)
                 self.__factories.append(f)
             except Exception, e:
                 print e
         if self.__factories:
-            self.__ibus.RegisterFactories(map(lambda f: f.get_object_path(), self.__factories), **ibus.DEFAULT_ASYNC_HANDLERS)
+            self.__ibus.register_factories(map(lambda f: f.get_object_path(), self.__factories))
 
     def run(self):
         self.__loop.run()
@@ -59,7 +53,6 @@ class IMApp:
 
 
 def launch_engine(methods):
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     IMApp(methods).run()
 
 def print_help(out, v = 0):
