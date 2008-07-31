@@ -30,7 +30,7 @@ import gobject
 class IMApp:
     def __init__(self, methods):
         self.__mainloop = gobject.MainLoop()
-        self.__bus = ibus.IBus()
+        self.__bus = ibus.Bus()
         self.__bus.connect("destroy", self.__bus_destroy_cb)
 
         self.__methods = []

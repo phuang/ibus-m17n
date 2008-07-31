@@ -27,8 +27,8 @@ from ibus import modifier
 _ = lambda a: a
 
 class Engine(ibus.EngineBase):
-    def __init__(self, ic, conn, object_path):
-        super(Engine, self).__init__(conn, object_path)
+    def __init__(self, ic, bus, object_path):
+        super(Engine, self).__init__(bus, object_path)
         self.__ic = ic
         self.__prop_list = ibus.PropList()
 
