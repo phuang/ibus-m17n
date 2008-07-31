@@ -29,27 +29,26 @@ import gobject
 
 class IMApp:
     def __init__(self, methods):
-        self.__loop = gobject.MainLoop()
-        self.__ibus = ibus.IBus()
-        self.__ibus.call_on_disconnection(self.__disconnected_cb)
+        self.__mainloop = gobject.MainLoop()
+        self.__bus = ibus.IBus()
+        self.__bus.connect("destroy", self.__bus_destroy_cb)
 
         self.__methods = []
         self.__factories = []
         for lang, name in methods:
             try:
-                f = factory.EngineFactory(lang, name, self.__ibus)
+                f = factory.EngineFactory(lang, name, self.__bus)
                 self.__factories.append(f)
             except Exception, e:
                 print e
         if self.__factories:
-            self.__ibus.register_factories(map(lambda f: f.get_object_path(), self.__factories))
+            self.__bus.register_factories(map(lambda f: f.get_object_path(), self.__factories))
 
     def run(self):
-        self.__loop.run()
+        self.__mainloop.run()
 
-    def __disconnected_cb(self):
-        print "disconnected"
-        self.__loop.quit()
+    def __bus_destroy_cb(self):
+        self.__mainloop.quit()
 
 
 def launch_engine(methods):
