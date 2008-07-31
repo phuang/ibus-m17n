@@ -31,7 +31,7 @@ class EngineFactory(ibus.EngineFactoryBase):
     AUTHORS = "Huang Peng <shawn.p.huang@gmail.com>"
     CREDITS = "GPLv2"
 
-    def __init__(self, lang, name, _ibus):
+    def __init__(self, lang, name, bus):
         icon = m17n.minput_get_icon(lang, name)
         if not icon:
             icon = "ibus"
@@ -41,7 +41,7 @@ class EngineFactory(ibus.EngineFactoryBase):
         factory_path = FACTORY_PATH % (lang, name.replace("-", "_"))
         engine_path = ENGINE_PATH % (lang, name.replace("-", "_"))
         engine_class = lambda *args, **kargs: engine.Engine (self.__im.create_ic(), *args, **kargs)
-        super(EngineFactory,self).__init__(self.__info, engine_class, engine_path, _ibus, factory_path)
+        super(EngineFactory,self).__init__(self.__info, engine_class, engine_path, bus, factory_path)
 
         self.__factory_path = factory_path
 
