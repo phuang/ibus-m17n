@@ -23,7 +23,7 @@ icons_DATA = \
 	ibus-m17n.svg \
 	$(NULL)
 
-iconsdir = $(datadir)/ibus/icons
+iconsdir = $(pkgdatadir)/icons
 
 EXTRA_DIST = \
 	ibus-m17n.svg \
