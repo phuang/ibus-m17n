@@ -81,7 +81,11 @@ test: all
 
 install-exec-local: gen-engine.py
 	$(MKDIR_P) $(DESTDIR)$(datadir)/ibus/engine
-	$(PYTHON) $(builddir)/gen-engine.py $(DESTDIR)$(datadir)/ibus/engine
+	$(ENV) \
+		PYTHONPATH=$(abs_builddir):$(abs_builddir)/.libs \
+		$(PYTHON) \
+		$(builddir)/gen-engine.py \
+		$(DESTDIR)$(datadir)/ibus/engine
 
 uninstall-local:
 	$(RM) $(DESTDIR)$(datadir)/ibus/engine/m17n-*.engine
