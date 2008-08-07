@@ -78,7 +78,7 @@ BuildRequires: m17n-db-telugu
 Requires:   ibus, m17n-lib
 
 %description
-IBus template project
+M17N engine for IBus input platform.
 
 %prep
 %setup -q
