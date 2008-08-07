@@ -11,7 +11,71 @@ URL:        http://code.google.com/p/ibus/
 Source0:    http://ibus.googlecode.com/files/%{name}-%{version}.tar.gz
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: gettext-devel, libtool, python-devel, perl(XML::Parser), swig, m17n-lib-devel, pkgconfig
+BuildRequires: gettext-devel, libtool, python-devel, perl(XML::Parser), swig, pkgconfig
+BuildRequires: m17n-lib-devel
+BuildRequires: m17n-contrib-esperanto
+BuildRequires: m17n-db-uyghur
+BuildRequires: m17n-db-tamil
+BuildRequires: m17n-db-assamese
+BuildRequires: m17n-db-chinese
+BuildRequires: m17n-db-swedish
+BuildRequires: m17n-db-danish
+BuildRequires: m17n-contrib-sinhala
+BuildRequires: m17n-db-oriya
+BuildRequires: m17n-db-farsi
+BuildRequires: m17n-db-gregorian
+BuildRequires: m17n-contrib-tamil
+BuildRequires: m17n-contrib-bengali
+BuildRequires: m17n-db-armenian
+BuildRequires: m17n-db-khmer
+BuildRequires: m17n-contrib-oriya
+BuildRequires: m17n-contrib-nepali
+BuildRequires: m17n-db-syriac
+BuildRequires: m17n-db-malayalam
+BuildRequires: m17n-contrib-tai
+BuildRequires: m17n-db-french
+BuildRequires: m17n-db-kazakh
+# BuildRequires: m17n-db-datafiles
+BuildRequires: m17n-contrib-kannada
+BuildRequires: m17n-db-gujarati
+BuildRequires: m17n-contrib-malayalam
+BuildRequires: m17n-db-common-cjk
+BuildRequires: m17n-db-dhivehi
+BuildRequires: m17n-db-serbian
+BuildRequires: m17n-db-tibetan
+BuildRequires: m17n-db-lao
+BuildRequires: m17n-contrib-assamese
+BuildRequires: m17n-contrib-vietnamese
+BuildRequires: m17n-db-kannada
+BuildRequires: m17n-contrib-marathi
+BuildRequires: m17n-db-croatian
+BuildRequires: m17n-db-cham
+BuildRequires: m17n-db-hebrew
+BuildRequires: m17n-db-punjabi
+BuildRequires: m17n-contrib-hindi
+BuildRequires: m17n-contrib-russian
+BuildRequires: m17n-db-hindi
+BuildRequires: m17n-db-myanmar
+BuildRequires: m17n-db-greek
+BuildRequires: m17n-contrib-punjabi
+BuildRequires: m17n-contrib
+BuildRequires: m17n-db-amharic
+BuildRequires: m17n-db-thai
+BuildRequires: m17n-db-vietnamese
+BuildRequires: m17n-contrib-urdu
+BuildRequires: m17n-db-korean
+BuildRequires: m17n-db-bengali
+BuildRequires: m17n-db-sinhala
+BuildRequires: m17n-db-japanese
+BuildRequires: m17n-db-generic
+BuildRequires: m17n-db-arabic
+BuildRequires: m17n-contrib-gujarati
+BuildRequires: m17n-db-russian
+BuildRequires: m17n-db-latin
+BuildRequires: m17n-db-slovak
+BuildRequires: m17n-contrib-telugu
+BuildRequires: m17n-db-telugu
+
 Requires:   ibus, m17n-lib
 
 %description
@@ -28,7 +92,7 @@ make %{?_smp_mflags}
 %install
 rm -rf $RPM_BUILD_ROOT
 make DESTDIR=${RPM_BUILD_ROOT} install
-rm -f $RPM_BUILD_ROOT%{python_sitearch}/_m17n.la
+rm -f $RPM_BUILD_ROOT%{python_sitelib}/_m17n.la
 
 # %find_lang %{name}
 
@@ -39,15 +103,56 @@ rm -rf $RPM_BUILD_ROOT
 # -f %{name}.lang
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING README
-%{python_sitearch}/_m17n.so
-%{python_sitearch}/m17n.py*
+%{python_sitelib}/_m17n.so
+%{python_sitelib}/m17n.py*
 %dir %{_datadir}/ibus-m17n
 %{_datadir}/ibus-m17n/*
 %{_libexecdir}/ibus-engine-m17n
-%{_datadir}/ibus/engine/m17n-*.engine
+
+%define lang_meta_pkg() \
+%package %1\
+Summary:    IBus for %(echo %1 | sed -e "s/\\(.*\\)/\\u\\1/") support\
+Group:      System Environment/Libraries\
+Requires:   ibus-m17n %(echo %* | sed -e "s/[a-z]* //")\
+\
+%description %1\
+This package requires the IBus M17N packages needed for %(echo %1 | sed -e "s/\\(.*\\)/\\u\\1/") support.\
+\
+%files %1\
+%{_datadir}/ibus/engine/m17n-%2-*.engine
+
+%lang_meta_pkg amharic am ibus-m17n m17n-db-amharic
+%lang_meta_pkg assamese as ibus-m17n m17n-db-assamese m17n-contrib-assamese
+%lang_meta_pkg bengali bn ibus-m17n m17n-db-bengali m17n-contrib-bengali
+%lang_meta_pkg chinese zh ibus-m17n m17n-chinese
+%lang_meta_pkg dhivehi dv ibus-m17n m17n-db-dhivehi
+%lang_meta_pkg farsi fa ibus-m17n m17n-db-farsi
+%lang_meta_pkg gujarati gu ibus-m17n m17n-db-gujarati m17n-contrib-gujarati
+%lang_meta_pkg hindi hi ibus-m17n m17n-db-hindi m17n-contrib-hindi
+%lang_meta_pkg japanese ja scim-anthy
+%lang_meta_pkg kannada kn ibus-m17n m17n-db-kannada m17n-contrib-kannada
+%lang_meta_pkg kazakh kk ibus-m17n m17n-db-kazakh
+%lang_meta_pkg korean ko ibus-m17n m17n-db-korean
+%lang_meta_pkg lao lo ibus-m17n, m17n-db-lao
+%lang_meta_pkg latin t ibus-m17n, m17n-db-latin
+%lang_meta_pkg malayalam ml ibus-m17n, m17n-db-malayalam m17n-contrib-malayalam
+%lang_meta_pkg marathi mr ibus-m17n, m17n-contrib-marathi
+%lang_meta_pkg myanmar my ibus-m17n, m17n-db-myanmar
+%lang_meta_pkg nepali ne ibus-m17n m17n-contrib-nepali
+%lang_meta_pkg oriya or ibus-m17n, m17n-db-oriya m17n-contrib-oriya
+%lang_meta_pkg punjabi pa ibus-m17n, m17n-db-punjabi m17n-contrib-punjabi
+%lang_meta_pkg russian ru ibus-m17n, m17n-db-russian m17n-contrib-russian
+%lang_meta_pkg sinhalese si ibus-m17n m17n-db-sinhala m17n-contrib-sinhala
+%lang_meta_pkg tai tai ibus-m17n, m17n-contrib-tai
+%lang_meta_pkg tamil ta ibus-m17n, m17n-db-tamil m17n-contrib-tamil
+%lang_meta_pkg telugu te ibus-m17n, m17n-db-telugu m17n-contrib-telugu
+%lang_meta_pkg thai th ibus-m17n, m17n-db-thai
+%lang_meta_pkg tibetan bo ibus-m17n, m17n-db-tibetan
+
+
 
 %changelog
-* Wed Jun 25 2008 Huang Peng <shawn.p.huang@gmail.com> - 0.1.0-1
+* Thu Aug 07 2008 Huang Peng <shawn.p.huang@gmail.com> - @VERSION@-1
 - The first version.
 
 
