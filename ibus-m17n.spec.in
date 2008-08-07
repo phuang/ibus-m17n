@@ -113,41 +113,62 @@ rm -rf $RPM_BUILD_ROOT
 %package %1\
 Summary:    IBus for %(echo %1 | sed -e "s/\\(.*\\)/\\u\\1/") support\
 Group:      System Environment/Libraries\
-Requires:   ibus-m17n %(echo %* | sed -e "s/[a-z]* //")\
+Requires:   ibus-m17n %(echo %* | sed -e "s/[a-z]* [a-z]* //")\
 \
 %description %1\
 This package requires the IBus M17N packages needed for %(echo %1 | sed -e "s/\\(.*\\)/\\u\\1/") support.\
 \
 %files %1\
-%{_datadir}/ibus/engine/m17n-%2-*.engine
+%{_datadir}/ibus/engine/m17n-%2-*.engine\
+\
 
 %lang_meta_pkg amharic am ibus-m17n m17n-db-amharic
+%lang_meta_pkg arabic ar ibus-m17n m17n-db-arabic
+%lang_meta_pkg armenian hy ibus-m17n m17n-db-armenian
 %lang_meta_pkg assamese as ibus-m17n m17n-db-assamese m17n-contrib-assamese
 %lang_meta_pkg bengali bn ibus-m17n m17n-db-bengali m17n-contrib-bengali
-%lang_meta_pkg chinese zh ibus-m17n m17n-chinese
+%lang_meta_pkg cham cmc ibus-m17n m17n-db-cham
+%lang_meta_pkg chinese zh ibus-m17n m17n-db-chinese
+%lang_meta_pkg danish da ibus-m17n m17n-db-danish
 %lang_meta_pkg dhivehi dv ibus-m17n m17n-db-dhivehi
+%lang_meta_pkg esperanto eo ibus-m17n m17n-db-esperanto m17n-contrib-esperanto
 %lang_meta_pkg farsi fa ibus-m17n m17n-db-farsi
+%lang_meta_pkg french fr ibus-m17n m17n-db-french
 %lang_meta_pkg gujarati gu ibus-m17n m17n-db-gujarati m17n-contrib-gujarati
+%lang_meta_pkg greek grc ibus-m17n m17n-db-greek
+
+%{_datadir}/ibus/engine/m17n-el-kbd.engine
+
+%lang_meta_pkg gregorian ka ibus-m17n m17n-db-gregorian
 %lang_meta_pkg hindi hi ibus-m17n m17n-db-hindi m17n-contrib-hindi
-%lang_meta_pkg japanese ja scim-anthy
+%lang_meta_pkg hebrew he ibus-m17n m17n-db-hebrew
+%lang_meta_pkg croatian hr ibus-m17n m17n-db-croatian
+%lang_meta_pkg japanese ja m17n-db-japanese
 %lang_meta_pkg kannada kn ibus-m17n m17n-db-kannada m17n-contrib-kannada
 %lang_meta_pkg kazakh kk ibus-m17n m17n-db-kazakh
+%lang_meta_pkg khmer km ibus-m17n m17n-db-khmer
 %lang_meta_pkg korean ko ibus-m17n m17n-db-korean
-%lang_meta_pkg lao lo ibus-m17n, m17n-db-lao
-%lang_meta_pkg latin t ibus-m17n, m17n-db-latin
-%lang_meta_pkg malayalam ml ibus-m17n, m17n-db-malayalam m17n-contrib-malayalam
-%lang_meta_pkg marathi mr ibus-m17n, m17n-contrib-marathi
-%lang_meta_pkg myanmar my ibus-m17n, m17n-db-myanmar
+%lang_meta_pkg lao lo ibus-m17n m17n-db-lao
+%lang_meta_pkg latin t ibus-m17n m17n-db-latin
+%lang_meta_pkg malayalam ml ibus-m17n m17n-db-malayalam m17n-contrib-malayalam
+%lang_meta_pkg marathi mr ibus-m17n m17n-contrib-marathi
+%lang_meta_pkg myanmar my ibus-m17n m17n-db-myanmar
 %lang_meta_pkg nepali ne ibus-m17n m17n-contrib-nepali
-%lang_meta_pkg oriya or ibus-m17n, m17n-db-oriya m17n-contrib-oriya
-%lang_meta_pkg punjabi pa ibus-m17n, m17n-db-punjabi m17n-contrib-punjabi
-%lang_meta_pkg russian ru ibus-m17n, m17n-db-russian m17n-contrib-russian
+%lang_meta_pkg oriya or ibus-m17n m17n-db-oriya m17n-contrib-oriya
+%lang_meta_pkg punjabi pa ibus-m17n m17n-db-punjabi m17n-contrib-punjabi
+%lang_meta_pkg russian ru ibus-m17n m17n-db-russian m17n-contrib-russian
+%lang_meta_pkg serbian sr ibus-m17n m17n-db-serbian
 %lang_meta_pkg sinhalese si ibus-m17n m17n-db-sinhala m17n-contrib-sinhala
-%lang_meta_pkg tai tai ibus-m17n, m17n-contrib-tai
-%lang_meta_pkg tamil ta ibus-m17n, m17n-db-tamil m17n-contrib-tamil
-%lang_meta_pkg telugu te ibus-m17n, m17n-db-telugu m17n-contrib-telugu
-%lang_meta_pkg thai th ibus-m17n, m17n-db-thai
-%lang_meta_pkg tibetan bo ibus-m17n, m17n-db-tibetan
+%lang_meta_pkg slovak sk ibus-m17n m17n-db-slovak
+%lang_meta_pkg swedish sv ibus-m17n m17n-db-swedish
+%lang_meta_pkg tai tai ibus-m17n m17n-contrib-tai
+%lang_meta_pkg tamil ta ibus-m17n m17n-db-tamil m17n-contrib-tamil
+%lang_meta_pkg telugu te ibus-m17n m17n-db-telugu m17n-contrib-telugu
+%lang_meta_pkg thai th ibus-m17n m17n-db-thai
+%lang_meta_pkg tibetan bo ibus-m17n m17n-db-tibetan
+%lang_meta_pkg urdu ur ibus-m17n m17n-db-urdu
+%lang_meta_pkg uyghur ug ibus-m17n m17n-db-uyghur
+%lang_meta_pkg vietnamese vi ibus-m17n m17n-db-vietnamese m17n-contrib-vietnamese
 
 
 
