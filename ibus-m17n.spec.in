@@ -78,7 +78,8 @@ BuildRequires: m17n-db-telugu
 Requires:   ibus, m17n-lib
 
 %description
-M17N engine for IBus input platform.
+M17N engine for IBus input platform. It allows input of many launguaes using
+the input table maps from m17n-db.
 
 %prep
 %setup -q
