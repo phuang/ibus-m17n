@@ -3,7 +3,7 @@
 Name:       ibus-m17n
 Version:    @PACKAGE_VERSION@
 Release:    1%{?dist}
-Summary:    The M17N engine for IBus platform.
+Summary:    The M17N engine for IBus platform
 License:    GPLv2+
 Group:      System Environment/Libraries
 URL:        http://code.google.com/p/ibus/
