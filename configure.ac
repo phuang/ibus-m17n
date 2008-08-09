@@ -67,7 +67,10 @@ AC_SUBST(ENV)
 
 # check python
 AM_PATH_PYTHON([2.5])
-PYTHON_CONFIG=`type -p python$PYTHON_VERSION-config`
+AC_PATH_PROG(PYTHON_CONFIG, python$PYTHON_VERSION-config)
+if test x"$PYTHON_CONFIG" == x""; then
+AC_PATH_PROG(PYTHON_CONFIG, python-config)
+fi
 if test "$PYTHON_CONFIG" != ""; then
     PYTHON_CFLAGS=`$PYTHON_CONFIG --includes`
     PYTHON_LIBS=`$PYTHON_CONFIG --libs`
