@@ -27,6 +27,9 @@ import ibus
 import factory
 import gobject
 
+N_ = lambda x: x
+N_("Hello")
+
 class IMApp:
     def __init__(self, methods):
         self.__mainloop = gobject.MainLoop()
