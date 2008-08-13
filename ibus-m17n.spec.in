@@ -112,7 +112,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/m17n.py*
 %dir %{_datadir}/ibus-m17n
 %{_datadir}/ibus-m17n/*
-%{_libexecdir}/ibus-engine-m17n
+%{_bindir}/ibus-engine-m17n
 
 %define lang_meta_pkg() \
 %package %1\

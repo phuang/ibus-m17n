@@ -54,7 +54,7 @@ _m17n_la_LDFLAGS = \
 	-module \
 	$(NULL)
 
-libexec_SCRIPTS = ibus-engine-m17n
+bin_SCRIPTS = ibus-engine-m17n
 
 m17n.py m17n_wrap.c: m17n.i
 	$(SWIG) -python -I/usr/include -o m17n_wrap.c $(srcdir)/m17n.i

@@ -1,7 +1,7 @@
 import sys
 import m17n
 
-_exec = "@prefix@/libexec/ibus-engine-m17n %s:%s"
+_exec = "@prefix@/bin/ibus-engine-m17n %s:%s"
 _icon = "@prefix@/share/ibus-m17n/icons/ibus-m17n.svg"
 _author = ""
 _credits = ""
