@@ -22,7 +22,6 @@ engine_m17n_PYTHON = \
 	engine.py \
 	factory.py \
 	main.py \
-	test.py \
 	$(NULL)
 
 engine_m17ndir = $(pkgdatadir)
