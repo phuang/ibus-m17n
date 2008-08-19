@@ -33,10 +33,10 @@ class Engine(ibus.EngineBase):
         self.__prop_list = ibus.PropList()
 
         # init input mode properties
-        self.__status_prop = ibus.Property(name = "status",
+        self.__status_prop = ibus.Property(name = u"status",
                             type = ibus.PROP_TYPE_NORMAL,
-                            label = "",
-                            tooltip = "m17n status",
+                            label = u"",
+                            tooltip = _(u"m17n status"),
                             visible = False)
 
         self.__prop_list.append(self.__status_prop)
@@ -137,11 +137,11 @@ class Engine(ibus.EngineBase):
     def __input_states_done_cb(self, command):
         print command, self.__ic.status
     def __input_states_draw_cb(self, command):
-        self.__status_prop.set_label(self.__ic.status)
+        self.__status_prop.label = self.__ic.status
         if self.__ic.status:
-            self.__status_prop.set_visible(True)
+            self.__status_prop.visible = True
         else:
-            self.__status_prop.set_visible(False)
+            self.__status_prop.visible = False
         self.update_property(self.__status_prop)
 
     def __input_candidates_start_cb(self, command):
