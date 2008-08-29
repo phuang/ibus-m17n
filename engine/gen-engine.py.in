@@ -20,7 +20,9 @@ for name, lang in m17n.minput_list_ims ():
 		icon_name = _icon
 	out = file (file_name, "w")
 	print >> out, "Exec=%s" % (_exec % (lang, name))
-	print >> out, "Name=%s" % name if name != "anthy" else "anthy (m17n)"
+	if name == "anthy":
+		name = "anthy (m17n)"
+	print >> out, "Name=%s" % name
 	print >> out, "Lang=%s" % lang
 	print >> out, "Icon=%s" % icon_name
 	print >> out, "Author=%s" % _author
