@@ -14,6 +14,9 @@ if len(sys.argv) == 2:
 print installdir
 
 for name, lang in m17n.minput_list_ims ():
+	if name == "anthy":
+		# we don't use ibus-m17n for anthy engine.
+		continue
 	file_name = "%s/m17n-%s-%s.engine" % (installdir, lang, name)
 	icon_name = m17n.minput_get_icon(lang, name)
 	if icon_name == None:
