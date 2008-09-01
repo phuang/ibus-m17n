@@ -24,7 +24,7 @@ engine_m17n_PYTHON = \
 	main.py \
 	$(NULL)
 
-engine_m17ndir = $(pkgdatadir)
+engine_m17ndir = $(pkgdatadir)/engine
 
 m17n_DATA = \
 	m17n.py \
