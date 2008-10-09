@@ -106,14 +106,19 @@ _conv_mtext_to_unicode (MText *text)
 {
     PyObject *result = NULL;
     if (text) {
-        MConverter *converter;
+        static MConverter *converter = NULL;
         int bufsize;
         Py_UNICODE *buf;
+        if (converter == NULL) {
 #if Py_UNICODE_SIZE == 2
             converter = mconv_buffer_converter (Mcoding_utf_16, NULL, 0);
 #else
             converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
 #endif
+        }
+        else {
+            mconv_reset_converter (converter);
+        }
 
         bufsize = mtext_len (text) * 6 + 6;
         buf = (Py_UNICODE *)PyMem_Malloc (bufsize);
@@ -125,7 +130,6 @@ _conv_mtext_to_unicode (MText *text)
         result = PyUnicode_FromUnicode (buf + 1, converter->nchars);
 
         PyMem_Free (buf);
-        mconv_free_converter (converter);
     }
     else {
         Py_INCREF (Py_None);
