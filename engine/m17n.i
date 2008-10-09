@@ -99,6 +99,42 @@ minput_get_icon (MSymbol lang, MSymbol name)
 }
 
 /*
+ * Convert MText * to PyUnicode *
+ */
+PyObject *
+_conv_mtext_to_unicode (MText *text)
+{
+    PyObject *result = NULL;
+    if (text) {
+        MConverter *converter;
+        int bufsize;
+        Py_UNICODE *buf;
+#if Py_UNICODE_SIZE == 2
+            converter = mconv_buffer_converter (Mcoding_utf_16, NULL, 0);
+#else
+            converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
+#endif
+
+        bufsize = mtext_len (text) * 6 + 6;
+        buf = (Py_UNICODE *)PyMem_Malloc (bufsize);
+
+        mconv_rebind_buffer (converter, (char *)buf, bufsize);
+        mconv_encode (converter, text);
+
+        buf [converter->nchars + 1] = 0;
+        result = PyUnicode_FromUnicode (buf + 1, converter->nchars);
+
+        PyMem_Free (buf);
+        mconv_free_converter (converter);
+    }
+    else {
+        Py_INCREF (Py_None);
+        result = Py_None;
+    }
+    return result;
+}
+
+/*
  * Create an input context
  */
 MInputContext *
@@ -218,36 +254,7 @@ _im_callback (MInputContext *ic, MSymbol command)
 %{
 static PyObject *
 PyUnicode_FromMText (MText *text) {
-    PyObject *result = NULL;
-
-    if (text) {
-        MConverter *converter;
-        int bufsize;
-        Py_UNICODE *buf;
-
-#if Py_UNICODE_SIZE == 2
-        converter = mconv_buffer_converter (Mcoding_utf_16, NULL, 0);
-#else
-        converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
-#endif
-
-        bufsize = mtext_len (text) * 6 + 6;
-        buf = (Py_UNICODE *)PyMem_Malloc (bufsize);
-
-        mconv_rebind_buffer (converter, (char *)buf, bufsize);
-        mconv_encode (converter, text);
-
-        buf [converter->nchars + 1] = 0;
-        result = PyUnicode_FromUnicode (buf + 1, converter->nchars);
-
-        PyMem_Free (buf);
-        mconv_free_converter (converter);
-    }
-    else {
-        Py_INCREF (Py_None);
-        result = Py_None;
-    }
-    return result;
+    return _conv_mtext_to_unicode (text);
 }
 %}
 
@@ -447,18 +454,7 @@ struct MInputContext {};
                 group = mplist_next (group)) {
                 if (mplist_key (group) == Mtext) {
                     MText *text = (MText *) mplist_value (group);
-
-                    /* check buffer size */
-                    if (bufsize < mtext_len (text) * 6 + 6) {
-                        bufsize = mtext_len (text) * 6 + 6;
-                        buf = (Py_UNICODE *)PyMem_Realloc (buf, bufsize);
-                    }
-
-                    /* convert buffer */
-                    mconv_rebind_buffer (converter, (char *)buf, bufsize);
-                    mconv_encode (converter, text);
-                    buf[converter->nchars + 1] = 0;
-                    PyList_Append (list, PyUnicode_FromUnicode(buf + 1, converter->nchars));
+                    PyList_Append (list, _conv_mtext_to_unicode (text));
                 }
                 else {
                     PyObject *l = PyList_New (0);
@@ -467,17 +463,7 @@ struct MInputContext {};
                     for (; mplist_key (p) != Mnil; p = mplist_next (p)) {
                         MText *text = (MText *) mplist_value (p);
 
-                        /* check buffer size */
-                        if (bufsize < mtext_len (text) * 6 + 6) {
-                            bufsize = mtext_len (text) * 6 + 6;
-                            buf = (Py_UNICODE *)PyMem_Realloc (buf, bufsize);
-                        }
-
-                        /* copnvert buffer */
-                        mconv_rebind_buffer (converter, (char *)buf, bufsize);
-                        mconv_encode (converter, text);
-                        buf[converter->nchars + 1] = 0;
-                        PyList_Append (l, PyUnicode_FromUnicode(buf + 1, converter->nchars));
+                        PyList_Append (l, _conv_mtext_to_unicode (text));
                     }
                     PyList_Append (list, l);
                 }

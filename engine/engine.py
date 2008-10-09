@@ -171,7 +171,6 @@ class Engine(ibus.EngineBase):
 
         aux_string = "(%d / %d)" % (self.__ic.candidate_index + 1,
                 len(self.__lookup_table))
-
         self.update_lookup_table(self.__lookup_table,
                 self.__ic.candidates_show)
 
