@@ -49,7 +49,7 @@ AC_ISC_POSIX
 AC_HEADER_STDC
 AM_PROG_LIBTOOL
 
-# check anthy
+# check m17n
 PKG_CHECK_MODULES(M17N, [
     m17n-shell
 ])
