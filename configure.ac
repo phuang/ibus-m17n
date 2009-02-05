@@ -49,6 +49,11 @@ AC_ISC_POSIX
 AC_HEADER_STDC
 AM_PROG_LIBTOOL
 
+# check ibus
+PKG_CHECK_MODULES(IBUS, [
+    ibus-1.0
+])
+
 # check m17n
 PKG_CHECK_MODULES(M17N, [
     m17n-shell
@@ -65,22 +70,6 @@ AC_SUBST(SWIG)
 AC_PATH_PROG(ENV, env)
 AC_SUBST(ENV)
 
-# check python
-AM_PATH_PYTHON([2.5])
-AC_PATH_PROG(PYTHON_CONFIG, python$PYTHON_VERSION-config)
-if test x"$PYTHON_CONFIG" == x""; then
-    AC_PATH_PROG(PYTHON_CONFIG, python-config)
-fi
-if test "$PYTHON_CONFIG" != ""; then
-    PYTHON_CFLAGS=`$PYTHON_CONFIG --includes`
-    PYTHON_LIBS=`$PYTHON_CONFIG --libs`
-else
-    PYTHON_CFLAGS=`$PYTHON $srcdir/python-config.py --includes`
-    PYTHON_LIBS=`$PYTHON $srcdir/python-config.py --libs`
-fi
-AC_SUBST(PYTHON_CFLAGS)
-AC_SUBST(PYTHON_LIBS)
-
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-m17n
 AC_SUBST(GETTEXT_PACKAGE)
@@ -94,9 +83,8 @@ AM_GNU_GETTEXT_VERSION(0.16.1)
 AC_CONFIG_FILES([ po/Makefile.in
 Makefile
 ibus-m17n.spec
-engine/Makefile
-engine/gen-engine.py
-engine/ibus-engine-m17n
+src/Makefile
+src/m17n.xml
 icons/Makefile
 m4/Makefile
 ])

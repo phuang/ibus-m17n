@@ -19,7 +19,7 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 SUBDIRS = \
-	engine \
+	src \
 	icons \
 	m4 \
 	po \
@@ -30,7 +30,6 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = \
 	autogen.sh \
 	@PACKAGE_NAME@.spec.in \
-	python-config.py \
 	$(NULL)
 
 noinst_DIST = \
