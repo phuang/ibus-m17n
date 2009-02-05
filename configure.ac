@@ -59,13 +59,6 @@ PKG_CHECK_MODULES(M17N, [
     m17n-shell
 ])
 
-# check swig
-AC_PATH_PROG(SWIG, swig)
-if test x"$SWIG" == x""; then
-     AC_MSG_ERROR([can not find swig])
-fi
-AC_SUBST(SWIG)
-
 # check env
 AC_PATH_PROG(ENV, env)
 AC_SUBST(ENV)
