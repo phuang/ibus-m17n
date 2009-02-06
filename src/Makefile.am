@@ -73,5 +73,17 @@ EXTRA_DIST = \
 	m17n.xml.in \
 	$(NULL)
 
+CLEANFILES = \
+	m17n.xml \
+	$(NULL)
+
+m17n.xml: m17n.xml.in
+	( \
+		libexecdir=${libexecdir}; \
+		pkgdatadir=${pkgdatadir}; \
+		s=`cat $<`; \
+		eval "echo \"$${s}\""; \
+	) > $@
+
 test: ibus-engine-m17n
 	$(builddir)/ibus-engine-m17n

@@ -3,7 +3,7 @@
 <component>
 	<name>org.freedesktop.IBus.M17N</name>
 	<description>M17N Component</description>
-	<exec>@prefix@/libexec/ibus-engine-m17n --ibus</exec>
+	<exec>${libexecdir}/ibus-engine-m17n --ibus</exec>
 	<version>@VERSION@</version>
 	<author>Peng Huang &lt;shawn.p.huang@gmail.com&gt;</author>
 	<license>GPL</license>
@@ -12,5 +12,5 @@
 	<observed-paths>
 		<path>/usr/share/m17n/</path>
 	</observed-paths>
-	<engines exec="@prefix@/libexec/ibus-engine-m17n --xml" />
+	<engines exec=\"${libexecdir}/ibus-engine-m17n --xml\" />
 </component>
