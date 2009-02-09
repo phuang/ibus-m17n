@@ -144,7 +144,7 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
     m17n->prop_list = ibus_prop_list_new ();
     ibus_prop_list_append (m17n->prop_list,  m17n->status_prop);
 
-    m17n->table = ibus_lookup_table_new (9, TRUE);
+    m17n->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
     m17n->context = NULL;
 }
 
