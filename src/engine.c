@@ -53,9 +53,10 @@ static void ibus_m17n_engine_page_up        (IBusEngine             *engine);
 static void ibus_m17n_engine_page_down      (IBusEngine             *engine);
 static void ibus_m17n_engine_cursor_up      (IBusEngine             *engine);
 static void ibus_m17n_engine_cursor_down    (IBusEngine             *engine);
-static void ibus_m17n_property_activate     (IBusEngine             *engine,
+static void ibus_m17n_engine_property_activate
+                                            (IBusEngine             *engine,
                                              const gchar            *prop_name,
-                                             gint                    prop_state);
+                                             guint                   prop_state);
 static void ibus_m17n_engine_property_show
 											(IBusEngine             *engine,
                                              const gchar            *prop_name);
@@ -126,6 +127,7 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
     engine_class->cursor_up = ibus_m17n_engine_cursor_up;
     engine_class->cursor_down = ibus_m17n_engine_cursor_down;
 
+    // engine_class->property_activate = ibus_m17n_engine_property_activate;
 }
 
 static void
@@ -454,6 +456,15 @@ ibus_m17n_engine_cursor_down (IBusEngine *engine)
 
     ibus_m17n_engine_process_key (m17n, msymbol ("Right"));
     parent_class->cursor_down (engine);
+}
+
+static void
+ibus_m17n_engine_property_activate (IBusEngine  *engine,
+                                    const gchar *prop_name,
+                                    guint        prop_state)
+{
+    g_debug ("prop_name=%s, prop_state=%d", prop_name, prop_state);
+    parent_class->property_activate (engine, prop_name, prop_state);
 }
 
 static void
