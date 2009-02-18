@@ -279,22 +279,36 @@ MSymbol
 ibus_m17n_key_event_to_symbol (guint keyval,
                                guint modifiers)
 {
-    GString *key;
-    MSymbol mkey = Mnil;
+    GString *keysym;
+    MSymbol mkeysym = Mnil;
     guint mask = 0;
 
+    if (keyval >= IBUS_Shift_L && keyval <= IBUS_Hyper_R) {
+        return Mnil;
+    }
+
+    keysym = g_string_new ("");
+
     if (keyval >= IBUS_space && keyval <= IBUS_asciitilde) {
+        gint c = keyval;
         if (keyval == IBUS_space && modifiers & IBUS_SHIFT_MASK)
             mask |= IBUS_SHIFT_MASK;
 
         if (modifiers & IBUS_CONTROL_MASK) {
-            if (keyval >= IBUS_a && keyval <= IBUS_z)
-                keyval += IBUS_A - IBUS_a;
+            if (c >= IBUS_a && c <= IBUS_z)
+                c += IBUS_A - IBUS_a;
             mask |= IBUS_CONTROL_MASK;
         }
+
+        g_string_append_c (keysym, c);
     }
-    else if (keyval >= IBUS_Shift_L && keyval <= IBUS_Hyper_R) {
-        return Mnil;
+    else {
+        mask |= modifiers & (IBUS_CONTROL_MASK | IBUS_SHIFT_MASK);
+        g_string_append (keysym, ibus_keyval_name (keyval));
+        if (keysym->len == 0) {
+            g_string_free (keysym, TRUE);
+            return Mnil;
+        }
     }
 
     mask |= modifiers & (IBUS_MOD1_MASK |
@@ -302,33 +316,30 @@ ibus_m17n_key_event_to_symbol (guint keyval,
                          IBUS_SUPER_MASK |
                          IBUS_HYPER_MASK);
 
-    key = g_string_new ("");
 
     if (mask & IBUS_HYPER_MASK) {
-        g_string_prepend (key, "H-");
+        g_string_prepend (keysym, "H-");
     }
     if (mask & IBUS_SUPER_MASK) {
-        g_string_prepend (key, "s-");
+        g_string_prepend (keysym, "s-");
     }
     if (mask & IBUS_MOD1_MASK) {
-        g_string_prepend (key, "A-");
+        g_string_prepend (keysym, "A-");
     }
     if (mask & IBUS_META_MASK) {
-        g_string_prepend (key, "M-");
+        g_string_prepend (keysym, "M-");
     }
     if (mask & IBUS_CONTROL_MASK) {
-        g_string_prepend (key, "C-");
+        g_string_prepend (keysym, "C-");
     }
     if (mask & IBUS_SHIFT_MASK) {
-        g_string_prepend (key, "S-");
+        g_string_prepend (keysym, "S-");
     }
 
-    g_string_append (key, ibus_keyval_name (keyval));
+    mkeysym = msymbol (keysym->str);
+    g_string_free (keysym, TRUE);
 
-    mkey = msymbol (key->str);
-    g_string_free (key, TRUE);
-
-    return mkey;
+    return mkeysym;
 }
 
 static gboolean
