@@ -297,21 +297,30 @@ ibus_m17n_key_event_to_symbol (guint keyval,
         return Mnil;
     }
 
-    mask |= modifiers & (IBUS_MOD1_MASK | IBUS_META_MASK);
+    mask |= modifiers & (IBUS_MOD1_MASK |
+                         IBUS_META_MASK |
+                         IBUS_SUPER_MASK |
+                         IBUS_HYPER_MASK);
 
     key = g_string_new ("");
 
+    if (mask & IBUS_HYPER_MASK) {
+        g_string_prepend (key, "H-");
+    }
+    if (mask & IBUS_SUPER_MASK) {
+        g_string_prepend (key, "s-");
+    }
     if (mask & IBUS_MOD1_MASK) {
-        g_string_append (key, "A-");
+        g_string_prepend (key, "A-");
     }
     if (mask & IBUS_META_MASK) {
-        g_string_append (key, "M-");
+        g_string_prepend (key, "M-");
     }
     if (mask & IBUS_CONTROL_MASK) {
-        g_string_append (key, "C-");
+        g_string_prepend (key, "C-");
     }
     if (mask & IBUS_SHIFT_MASK) {
-        g_string_append (key, "S-");
+        g_string_prepend (key, "S-");
     }
 
     g_string_append (key, ibus_keyval_name (keyval));
