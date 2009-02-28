@@ -127,7 +127,7 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
     engine_class->cursor_up = ibus_m17n_engine_cursor_up;
     engine_class->cursor_down = ibus_m17n_engine_cursor_down;
 
-    // engine_class->property_activate = ibus_m17n_engine_property_activate;
+    engine_class->property_activate = ibus_m17n_engine_property_activate;
 }
 
 static void
@@ -173,7 +173,7 @@ ibus_m17n_engine_constructor (GType                   type,
                                           (GDestroyNotify) minput_close_im);
     }
 
-    im = g_hash_table_lookup (im_table, engine_name);
+    im = (MInputMethod *) g_hash_table_lookup (im_table, engine_name);
     if (im == NULL) {
         gchar *lang;
         gchar *name;
@@ -218,24 +218,7 @@ ibus_m17n_engine_constructor (GType                   type,
     m17n->context = minput_create_ic (im, NULL);
     mplist_add (m17n->context->plist, msymbol ("IBusEngine"), m17n);
 
-    /*
-        Minput_preedit_start
-        Minput_preedit_draw
-        Minput_preedit_done
-        Minput_status_start
-        Minput_status_draw
-        Minput_status_done
-        Minput_candidates_start
-        Minput_candidates_draw
-        Minput_candidates_done
-        Minput_set_spot
-        Minput_toggle
-        Minput_reset
-        Minput_get_surrounding_text
-        Minput_delete_surrounding_text
-    */
-
-    return (GObject *)m17n;
+    return (GObject *) m17n;
 }
 
 
@@ -483,7 +466,6 @@ ibus_m17n_engine_property_activate (IBusEngine  *engine,
                                     const gchar *prop_name,
                                     guint        prop_state)
 {
-    g_debug ("prop_name=%s, prop_state=%d", prop_name, prop_state);
     parent_class->property_activate (engine, prop_name, prop_state);
 }
 
@@ -534,10 +516,15 @@ ibus_m17n_engine_update_lookup_table (IBusM17NEngine *m17n)
             ibus_lookup_table_set_page_size (m17n->table, mplist_length (p));
 
             for (; mplist_key (p) != Mnil; p = mplist_next (p)) {
-                gchar * buf;
-                buf = ibus_m17n_mtext_to_utf8 ((MText *) mplist_value (p));
-                ibus_lookup_table_append_candidate (m17n->table, ibus_text_new_from_string (buf));
-                g_free (buf);
+                MText *mtext;
+                gchar *buf;
+
+                mtext = (MText *) mplist_value (p);
+                buf = ibus_m17n_mtext_to_utf8 (mtext);
+                if (buf) {
+                    ibus_lookup_table_append_candidate (m17n->table, ibus_text_new_from_string (buf));
+                    g_free (buf);
+                }
             }
         }
 
@@ -560,15 +547,15 @@ static void
 ibus_m17n_engine_callback (MInputContext *context,
                            MSymbol        command)
 {
-    IBusM17NEngine *m17n;
-    MPlist *p;
+    IBusM17NEngine *m17n = NULL;
+    MPlist *p = NULL;
 
     p = mplist_find_by_key (context->plist,  msymbol ("IBusEngine"));
     if (p) {
-        m17n = (IBusM17NEngine *)mplist_value (p);
+        m17n = (IBusM17NEngine *) mplist_value (p);
     }
-    else {
-        m17n = NULL;
+
+    if (m17n == NULL) {
         return;
     }
 
@@ -578,18 +565,19 @@ ibus_m17n_engine_callback (MInputContext *context,
     else if (command == Minput_preedit_draw) {
         IBusText *text;
         gchar *buf;
-        gint len;
 
         buf = ibus_m17n_mtext_to_utf8 (m17n->context->preedit);
-        text = ibus_text_new_from_static_string (buf);
-        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND, 0x00ffffff, 0, -1);
-        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND, 0x00000000, 0, -1);
-        ibus_engine_update_preedit_text ((IBusEngine *)m17n,
-                                         text,
-                                         m17n->context->cursor_pos,
-                                         mtext_len (m17n->context->preedit) > 0);
-        g_object_unref (text);
-        g_free (buf);
+        if (buf) {
+            text = ibus_text_new_from_string (buf);
+            ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND, 0x00ffffff, 0, -1);
+            ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND, 0x00000000, 0, -1);
+            ibus_engine_update_preedit_text ((IBusEngine *) m17n,
+                                             text,
+                                             m17n->context->cursor_pos,
+                                             mtext_len (m17n->context->preedit) > 0);
+            g_object_unref (text);
+            g_free (buf);
+        }
     }
     else if (command == Minput_preedit_done) {
         ibus_engine_hide_preedit_text ((IBusEngine *)m17n);
@@ -612,6 +600,7 @@ ibus_m17n_engine_callback (MInputContext *context,
             ibus_property_set_label (m17n->status_prop, NULL);
             ibus_property_set_visible (m17n->status_prop, FALSE);
         }
+
         ibus_engine_update_property ((IBusEngine *)m17n, m17n->status_prop);
         g_free (status);
     }

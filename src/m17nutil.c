@@ -4,36 +4,41 @@
 
 #define N_(text) text
 
+static MConverter *utf8_converter = NULL;
+static MConverter *utf32_converter = NULL;
+
 void
 ibus_m17n_init (void)
 {
     M17N_INIT ();
+
+    if (utf8_converter == NULL) {
+        utf8_converter = mconv_buffer_converter (Mcoding_utf_8, NULL, 0);
+    }
+
+    if (utf32_converter == NULL) {
+        utf32_converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
+    }
 }
 
 gchar *
 ibus_m17n_mtext_to_utf8 (MText *text)
 {
-    static MConverter *converter = NULL;
     gint bufsize;
     gchar *buf;
 
     if (text == NULL)
         return NULL;
 
-    if (converter == NULL) {
-        converter = mconv_buffer_converter (Mcoding_utf_8, NULL, 0);
-    }
-    else {
-        mconv_reset_converter (converter);
-    }
+    mconv_reset_converter (utf8_converter);
 
     bufsize = mtext_len (text) * 6 + 6;
     buf = g_malloc (bufsize);
 
-    mconv_rebind_buffer (converter, buf, bufsize);
-    mconv_encode (converter, text);
+    mconv_rebind_buffer (utf8_converter, buf, bufsize);
+    mconv_encode (utf8_converter, text);
 
-    buf [converter->nbytes] = 0;
+    buf [utf8_converter->nbytes] = 0;
 
     return buf;
 }
@@ -41,27 +46,21 @@ ibus_m17n_mtext_to_utf8 (MText *text)
 gunichar *
 ibus_m17n_mtext_to_ucs4 (MText *text)
 {
-    static MConverter *converter = NULL;
     gint bufsize;
     gunichar *buf;
 
     if (text == NULL)
         return NULL;
 
-    if (converter == NULL) {
-        converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
-    }
-    else {
-        mconv_reset_converter (converter);
-    }
+    mconv_reset_converter (utf32_converter);
 
     bufsize = mtext_len (text) * 4 + 8;
     buf = g_malloc (bufsize);
 
-    mconv_rebind_buffer (converter, (gchar *)buf, bufsize);
-    mconv_encode (converter, text);
+    mconv_rebind_buffer (utf32_converter, (gchar *)buf, bufsize);
+    mconv_encode (utf32_converter, text);
 
-    buf [converter->nchars] = 0;
+    buf [utf32_converter->nchars] = 0;
 
     return buf;
 }
