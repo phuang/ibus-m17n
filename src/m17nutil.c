@@ -32,8 +32,8 @@ ibus_m17n_mtext_to_utf8 (MText *text)
 
     mconv_reset_converter (utf8_converter);
 
-    bufsize = mtext_len (text) * 6 + 6;
-    buf = g_malloc (bufsize);
+    bufsize = (mtext_len (text) + 1) * 6;
+    buf = (gchar *) g_malloc (bufsize);
 
     mconv_rebind_buffer (utf8_converter, buf, bufsize);
     mconv_encode (utf8_converter, text);
@@ -54,8 +54,8 @@ ibus_m17n_mtext_to_ucs4 (MText *text)
 
     mconv_reset_converter (utf32_converter);
 
-    bufsize = mtext_len (text) * 4 + 8;
-    buf = g_malloc (bufsize);
+    bufsize = (mtext_len (text) + 2) * sizeof (gunichar);
+    buf = (gunichar *) g_malloc (bufsize);
 
     mconv_rebind_buffer (utf32_converter, (gchar *)buf, bufsize);
     mconv_encode (utf32_converter, text);
