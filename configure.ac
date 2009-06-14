@@ -21,7 +21,7 @@
 # if not 1, append datestamp to the version number.
 m4_define([ibus_released], [0])
 m4_define([ibus_major_version], [1])
-m4_define([ibus_minor_version], [1])
+m4_define([ibus_minor_version], [2])
 m4_define([ibus_micro_version], [0])
 m4_define(ibus_maybe_datestamp,
     m4_esyscmd([if test x]ibus_released[ != x1; then date +.%Y%m%d | tr -d '\n\r'; fi]))
@@ -51,7 +51,7 @@ AM_PROG_LIBTOOL
 
 # check ibus
 PKG_CHECK_MODULES(IBUS, [
-    ibus-1.0
+    ibus-1.0 >= 1.2.0
 ])
 
 # check m17n

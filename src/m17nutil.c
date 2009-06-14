@@ -90,7 +90,7 @@ ibus_m17n_engine_new (MSymbol  lang,
                                    "GPL",
                                    "",
                                    engine_icon ? engine_icon : "",
-                                   "en");
+                                   "us");
 
     g_free (engine_name);
     g_free (engine_title);

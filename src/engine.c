@@ -10,7 +10,7 @@ typedef struct _IBusM17NEngine IBusM17NEngine;
 typedef struct _IBusM17NEngineClass IBusM17NEngineClass;
 
 struct _IBusM17NEngine {
-	IBusEngine parent;
+    IBusEngine parent;
 
     /* members */
     MInputContext *context;
@@ -20,22 +20,23 @@ struct _IBusM17NEngine {
 };
 
 struct _IBusM17NEngineClass {
-	IBusEngineClass parent;
+    IBusEngineClass parent;
 };
 
 /* functions prototype */
-static void	ibus_m17n_engine_class_init	    (IBusM17NEngineClass    *klass);
-static void	ibus_m17n_engine_init		    (IBusM17NEngine		    *m17n);
+static void ibus_m17n_engine_class_init     (IBusM17NEngineClass    *klass);
+static void ibus_m17n_engine_init           (IBusM17NEngine         *m17n);
 static GObject*
             ibus_m17n_engine_constructor    (GType                   type,
                                              guint                   n_construct_params,
                                              GObjectConstructParam  *construct_params);
-static void	ibus_m17n_engine_destroy		(IBusM17NEngine		    *m17n);
+static void ibus_m17n_engine_destroy        (IBusM17NEngine         *m17n);
 static gboolean
-			ibus_m17n_engine_process_key_event
+            ibus_m17n_engine_process_key_event
                                             (IBusEngine             *engine,
-                                             guint               	 keyval,
-                                             guint               	 modifiers);
+                                             guint                   keyval,
+                                             guint                   keycode,
+                                             guint                   modifiers);
 static void ibus_m17n_engine_focus_in       (IBusEngine             *engine);
 static void ibus_m17n_engine_focus_out      (IBusEngine             *engine);
 static void ibus_m17n_engine_reset          (IBusEngine             *engine);
@@ -58,10 +59,10 @@ static void ibus_m17n_engine_property_activate
                                              const gchar            *prop_name,
                                              guint                   prop_state);
 static void ibus_m17n_engine_property_show
-											(IBusEngine             *engine,
+                                            (IBusEngine             *engine,
                                              const gchar            *prop_name);
 static void ibus_m17n_engine_property_hide
-											(IBusEngine             *engine,
+                                            (IBusEngine             *engine,
                                              const gchar            *prop_name);
 
 static void ibus_m17n_engine_commit_string
@@ -76,41 +77,41 @@ static GHashTable      *im_table = NULL;
 GType
 ibus_m17n_engine_get_type (void)
 {
-	static GType type = 0;
+    static GType type = 0;
 
-	static const GTypeInfo type_info = {
-		sizeof (IBusM17NEngineClass),
-		(GBaseInitFunc)		NULL,
-		(GBaseFinalizeFunc) NULL,
-		(GClassInitFunc)	ibus_m17n_engine_class_init,
-		NULL,
-		NULL,
-		sizeof (IBusM17NEngine),
-		0,
-		(GInstanceInitFunc)	ibus_m17n_engine_init,
-	};
+    static const GTypeInfo type_info = {
+        sizeof (IBusM17NEngineClass),
+        (GBaseInitFunc)        NULL,
+        (GBaseFinalizeFunc) NULL,
+        (GClassInitFunc)    ibus_m17n_engine_class_init,
+        NULL,
+        NULL,
+        sizeof (IBusM17NEngine),
+        0,
+        (GInstanceInitFunc)    ibus_m17n_engine_init,
+    };
 
-	if (type == 0) {
-		type = g_type_register_static (IBUS_TYPE_ENGINE,
-									   "IBusM17NEngine",
-									   &type_info,
-									   (GTypeFlags) 0);
-	}
+    if (type == 0) {
+        type = g_type_register_static (IBUS_TYPE_ENGINE,
+                                       "IBusM17NEngine",
+                                       &type_info,
+                                       (GTypeFlags) 0);
+    }
 
-	return type;
+    return type;
 }
 
 static void
 ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS (klass);
-	IBusEngineClass *engine_class = IBUS_ENGINE_CLASS (klass);
+    IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS (klass);
+    IBusEngineClass *engine_class = IBUS_ENGINE_CLASS (klass);
 
-	parent_class = (IBusEngineClass *) g_type_class_peek_parent (klass);
+    parent_class = (IBusEngineClass *) g_type_class_peek_parent (klass);
 
     object_class->constructor = ibus_m17n_engine_constructor;
-	ibus_object_class->destroy = (IBusObjectDestroyFunc) ibus_m17n_engine_destroy;
+    ibus_object_class->destroy = (IBusObjectDestroyFunc) ibus_m17n_engine_destroy;
 
     engine_class->process_key_event = ibus_m17n_engine_process_key_event;
 
@@ -245,7 +246,7 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
         m17n->context = NULL;
     }
 
-	IBUS_OBJECT_CLASS (parent_class)->destroy ((IBusObject *)m17n);
+    IBUS_OBJECT_CLASS (parent_class)->destroy ((IBusObject *)m17n);
 }
 
 static void
@@ -361,6 +362,7 @@ ibus_m17n_engine_process_key (IBusM17NEngine *m17n,
 static gboolean
 ibus_m17n_engine_process_key_event (IBusEngine     *engine,
                                     guint           keyval,
+                                    guint           keycode,
                                     guint           modifiers)
 {
     IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
