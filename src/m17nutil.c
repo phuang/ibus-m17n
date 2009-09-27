@@ -124,6 +124,36 @@ ibus_m17n_list_engines (void)
             lang = tag[1];
             name = tag[2];
 
+            l = minput_get_variable (lang, name, msymbol ("candidates-charset"));
+            if (l) {
+                /* check candidates encoding */
+                MPlist *sl;
+                MSymbol varname;
+                MText *vardesc;
+                MSymbol varunknown;
+                MSymbol varcharset;
+
+                sl = mplist_value (l);
+                varname  = mplist_value (sl);
+                sl = mplist_next (sl);
+                vardesc = mplist_value (sl);
+                sl = mplist_next (sl);
+                varunknown = mplist_value (sl);
+                sl = mplist_next (sl);
+                varcharset = mplist_value (sl);
+
+                if (varcharset != Mcoding_utf_8 || varcharset != Mcoding_utf_8_full) {
+                    g_debug ("%s != %s or %s",
+                                msymbol_name (varcharset),
+                                msymbol_name (Mcoding_utf_8),
+                                msymbol_name (Mcoding_utf_8_full));
+                    continue;
+                }
+
+            }
+            if (l)
+                m17n_object_unref (l);
+
             desc = minput_get_description (lang, name);
             l = minput_get_title_icon (lang, name);
             if (l && mplist_key (l) == Mtext) {
