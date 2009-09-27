@@ -142,11 +142,14 @@ ibus_m17n_list_engines (void)
                 sl = mplist_next (sl);
                 varcharset = mplist_value (sl);
 
-                if (varcharset != Mcoding_utf_8 || varcharset != Mcoding_utf_8_full) {
+                if (varcharset != Mcoding_utf_8 ||
+                    varcharset != Mcoding_utf_8_full) {
+                    /*
                     g_debug ("%s != %s or %s",
                                 msymbol_name (varcharset),
                                 msymbol_name (Mcoding_utf_8),
                                 msymbol_name (Mcoding_utf_8_full));
+                    */
                     continue;
                 }
 
