@@ -17,6 +17,8 @@ struct _IBusM17NEngine {
     IBusLookupTable *table;
     IBusProperty    *status_prop;
     IBusPropList    *prop_list;
+    IBusProperty    *show_iok_prop;
+    gchar *keymap_name;
 };
 
 struct _IBusM17NEngineClass {
@@ -134,6 +136,8 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 static void
 ibus_m17n_engine_init (IBusM17NEngine *m17n)
 {
+    IBusText *text;
+
     m17n->status_prop = ibus_property_new ("status",
                                            PROP_TYPE_NORMAL,
                                            NULL,
@@ -145,9 +149,22 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
                                            NULL);
     g_object_ref_sink (m17n->status_prop);
 
+    text = ibus_text_new_from_string ("iok");
+    m17n->show_iok_prop = ibus_property_new ("iok",
+                                           PROP_TYPE_NORMAL,
+                                           text,
+                                           "/usr/share/pixmaps/iok.xpm",
+                                           text,
+                                           TRUE,
+                                           FALSE,
+                                           0,
+                                           NULL);
+    g_object_ref_sink (m17n->show_iok_prop);
+
     m17n->prop_list = ibus_prop_list_new ();
     g_object_ref_sink (m17n->prop_list);
     ibus_prop_list_append (m17n->prop_list,  m17n->status_prop);
+    ibus_prop_list_append (m17n->prop_list,  m17n->show_iok_prop);
 
     m17n->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
     g_object_ref_sink (m17n->table);
@@ -162,6 +179,7 @@ ibus_m17n_engine_constructor (GType                   type,
     IBusM17NEngine *m17n;
     MInputMethod *im;
     const gchar *engine_name;
+    gchar **strv;
 
     m17n = (IBusM17NEngine *) G_OBJECT_CLASS (parent_class)->constructor (type,
                                                        n_construct_params,
@@ -169,6 +187,15 @@ ibus_m17n_engine_constructor (GType                   type,
 
     engine_name = ibus_engine_get_name ((IBusEngine *) m17n);
     g_assert (engine_name);
+    m17n->keymap_name =  g_strdup (engine_name);
+
+    strv = g_strsplit (engine_name, ":", 3);
+    g_assert (g_strv_length (strv) == 3);
+    g_assert (g_strcmp0 (strv[0], "m17n") == 0);
+
+    /* show iok icon for inscript */
+    if(strcmp (strv[2], "inscript") == 0 || strcmp (strv[2] , "inscript2") == 0)
+        ibus_property_set_visible (m17n->show_iok_prop, TRUE);
 
     if (im_table == NULL) {
         im_table = g_hash_table_new_full (g_str_hash,
@@ -181,12 +208,6 @@ ibus_m17n_engine_constructor (GType                   type,
     if (im == NULL) {
         gchar *lang;
         gchar *name;
-        gchar **strv;
-
-        strv = g_strsplit (engine_name, ":", 3);
-
-        g_assert (g_strv_length (strv) == 3);
-        g_assert (g_strcmp0 (strv[0], "m17n") == 0);
 
         lang = strv[1];
         name = strv[2];
@@ -211,9 +232,9 @@ ibus_m17n_engine_constructor (GType                   type,
             g_hash_table_insert (im_table, g_strdup (engine_name), im);
         }
 
-        g_strfreev (strv);
     }
 
+    g_strfreev (strv);
     if (im == NULL) {
         g_warning ("Can not find m17n keymap %s", engine_name);
         g_object_unref (m17n);
@@ -238,6 +259,11 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
     if (m17n->status_prop) {
         g_object_unref (m17n->status_prop);
         m17n->status_prop = NULL;
+    }
+
+    if (m17n->show_iok_prop) {
+        g_object_unref (m17n->show_iok_prop);
+        m17n->show_iok_prop = NULL;
     }
 
     if (m17n->table) {
@@ -386,6 +412,7 @@ ibus_m17n_engine_focus_in (IBusEngine *engine)
     IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
 
     ibus_engine_register_properties (engine, m17n->prop_list);
+
     ibus_m17n_engine_process_key (m17n, msymbol ("input-focus-in"));
 
     parent_class->focus_in (engine);
@@ -471,6 +498,23 @@ ibus_m17n_engine_property_activate (IBusEngine  *engine,
                                     const gchar *prop_name,
                                     guint        prop_state)
 {
+    gchar **strv;
+    gchar cmd[80];
+
+    IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
+
+    if (g_strcmp0 (prop_name, "iok") != 0)
+        return;
+
+    strv = g_strsplit (m17n->keymap_name, ":", 3);
+    g_assert (g_strv_length (strv) == 3);
+    g_assert (g_strcmp0 (strv[0], "m17n") == 0);
+
+    sprintf (cmd, "/usr/bin/iok -n %s", strv[1]);
+    g_debug ("keymap name = %s,prop_name=%s, prop_state=%d", m17n->keymap_name, prop_name, prop_state);
+    g_strfreev (strv);
+
+    g_spawn_command_line_async(cmd, NULL);
     parent_class->property_activate (engine, prop_name, prop_state);
 }
 
