@@ -18,7 +18,7 @@ Requires:   ibus
 Requires:   m17n-lib
 
 %description
-M17N engine for IBus input platform. It allows input of many launguaes using
+M17N engine for IBus input platform. It allows input of many languages using
 the input table maps from m17n-db.
 
 %prep
