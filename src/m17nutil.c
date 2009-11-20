@@ -7,6 +7,26 @@
 static MConverter *utf8_converter = NULL;
 static MConverter *utf32_converter = NULL;
 
+static const gchar *keymap[] = {
+    "as:phonetic",
+    "bn:inscript",
+    "gu:inscript",
+    "hi:inscript",
+    "kn:kgp",
+    "ks:kbd",
+    "mai:inscript",
+    "ml:inscript",
+    "mr:inscript",
+    "ne:rom",
+    "or:inscript",
+    "pa:inscript",
+    "sa:harvard-kyoto",
+    "sd:inscript",
+    "si:wijesekera",
+    "ta:tamil99",
+    "te:inscript"
+};
+
 void
 ibus_m17n_init (void)
 {
@@ -77,8 +97,10 @@ ibus_m17n_engine_new (MSymbol  lang,
     gchar *engine_title;
     gchar *engine_icon;
     gchar *engine_desc;
+    gint i;
 
     engine_name = g_strdup_printf ("%s:%s", msymbol_name (lang), msymbol_name (name));
+
     engine_title = ibus_m17n_mtext_to_utf8 (title);
     engine_icon = ibus_m17n_mtext_to_utf8 (icon);
     engine_desc = ibus_m17n_mtext_to_utf8 (desc);
@@ -91,6 +113,16 @@ ibus_m17n_engine_new (MSymbol  lang,
                                    "",
                                    engine_icon ? engine_icon : "",
                                    "us");
+    /* set default rank to 0 */
+    engine->rank = 0;
+
+    for (i = 0; i < G_N_ELEMENTS(keymap); i++) {
+        if (strcmp (engine_name, keymap[i]) == 0) {
+            /* set rank of default keymap to 1 */
+            engine->rank = 1;
+            break;
+        }
+    }
 
     g_free (engine_name);
     g_free (engine_title);
