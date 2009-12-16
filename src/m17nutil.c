@@ -8,23 +8,23 @@ static MConverter *utf8_converter = NULL;
 static MConverter *utf32_converter = NULL;
 
 static const gchar *keymap[] = {
-    "as:phonetic",
-    "bn:inscript",
-    "gu:inscript",
-    "hi:inscript",
-    "kn:kgp",
-    "ks:kbd",
-    "mai:inscript",
-    "ml:inscript",
-    "mr:inscript",
-    "ne:rom",
-    "or:inscript",
-    "pa:inscript",
-    "sa:harvard-kyoto",
-    "sd:inscript",
-    "si:wijesekera",
-    "ta:tamil99",
-    "te:inscript"
+    "m17n:as:phonetic",
+    "m17n:bn:inscript",
+    "m17n:gu:inscript",
+    "m17n:hi:inscript",
+    "m17n:kn:kgp",
+    "m17n:ks:kbd",
+    "m17n:mai:inscript",
+    "m17n:ml:inscript",
+    "m17n:mr:inscript",
+    "m17n:ne:rom",
+    "m17n:or:inscript",
+    "m17n:pa:inscript",
+    "m17n:sa:harvard-kyoto",
+    "m17n:sd:inscript",
+    "m17n:si:wijesekera",
+    "m17n:ta:tamil99",
+    "m17n:te:inscript"
 };
 
 void
@@ -94,19 +94,21 @@ ibus_m17n_engine_new (MSymbol  lang,
 {
     IBusEngineDesc *engine;
     gchar *engine_name;
+    gchar *engine_longname;
     gchar *engine_title;
     gchar *engine_icon;
     gchar *engine_desc;
     gint i;
 
-    engine_name = g_strdup_printf ("%s:%s", msymbol_name (lang), msymbol_name (name));
+    engine_name = g_strdup_printf ("m17n:%s:%s", msymbol_name (lang), msymbol_name (name));
 
+    engine_longname = g_strdup_printf ("%s - m17n", msymbol_name (name));
     engine_title = ibus_m17n_mtext_to_utf8 (title);
     engine_icon = ibus_m17n_mtext_to_utf8 (icon);
     engine_desc = ibus_m17n_mtext_to_utf8 (desc);
 
     engine = ibus_engine_desc_new (engine_name,
-                                   msymbol_name (name),
+                                   engine_longname,
                                    engine_desc ? engine_desc : "",
                                    msymbol_name (lang),
                                    "GPL",
@@ -125,6 +127,7 @@ ibus_m17n_engine_new (MSymbol  lang,
     }
 
     g_free (engine_name);
+    g_free (engine_longname);
     g_free (engine_title);
     g_free (engine_icon);
     g_free (engine_desc);

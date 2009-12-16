@@ -180,12 +180,13 @@ ibus_m17n_engine_constructor (GType                   type,
         gchar *name;
         gchar **strv;
 
-        strv = g_strsplit (engine_name, ":", 2);
+        strv = g_strsplit (engine_name, ":", 3);
 
-        g_assert (g_strv_length (strv) == 2);
+        g_assert (g_strv_length (strv) == 3);
+        g_assert (g_strcmp0 (strv[0], "m17n") == 0);
 
-        lang = strv[0];
-        name = strv[1];
+        lang = strv[1];
+        name = strv[2];
 
         im = minput_open_im (msymbol (lang), msymbol (name), NULL);
         if (im != NULL) {
