@@ -102,7 +102,7 @@ ibus_m17n_engine_new (MSymbol  lang,
 
     engine_name = g_strdup_printf ("m17n:%s:%s", msymbol_name (lang), msymbol_name (name));
 
-    engine_longname = g_strdup_printf ("%s - m17n", msymbol_name (name));
+    engine_longname = g_strdup_printf ("%s (m17n)", msymbol_name (name));
     engine_title = ibus_m17n_mtext_to_utf8 (title);
     engine_icon = ibus_m17n_mtext_to_utf8 (icon);
     engine_desc = ibus_m17n_mtext_to_utf8 (desc);
