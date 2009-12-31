@@ -23,7 +23,7 @@ AM_CFLAGS = \
 	@M17N_CFLAGS@ \
 	-DPKGDATADIR=\"$(pkgdatadir)\" \
 	$(NULL)
-AM_LDFLAGS = \
+AM_LDADD = \
 	@IBUS_LIBS@ \
 	@M17N_LIBS@ \
 	$(NULL)
@@ -44,6 +44,9 @@ test_m17n_CFLAGS = \
 	$(AM_CFLAGS) \
 	-DDEBUG \
 	$(NULL)
+test_m17n_LDADD = \
+	$(AM_LDADD) \
+	$(NULL)
 
 libexec_PROGRAMS = ibus-engine-m17n
 
@@ -59,7 +62,7 @@ ibus_engine_m17n_CFLAGS = \
 	@M17N_CFLAGS@ \
 	-DPKGDATADIR=\"$(pkgdatadir)\" \
 	$(NULL)
-ibus_engine_m17n_LDFLAGS = \
+ibus_engine_m17n_LDADD = \
 	@IBUS_LIBS@ \
 	@M17N_LIBS@ \
 	$(NULL)
