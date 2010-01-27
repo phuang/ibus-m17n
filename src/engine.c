@@ -143,11 +143,14 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
                                            FALSE,
                                            0,
                                            NULL);
+    g_object_ref_sink (m17n->status_prop);
 
     m17n->prop_list = ibus_prop_list_new ();
+    g_object_ref_sink (m17n->prop_list);
     ibus_prop_list_append (m17n->prop_list,  m17n->status_prop);
 
     m17n->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
+    g_object_ref_sink (m17n->table);
     m17n->context = NULL;
 }
 
@@ -257,7 +260,6 @@ ibus_m17n_engine_commit_string (IBusM17NEngine *m17n,
     IBusText *text;
     text = ibus_text_new_from_static_string (string);
     ibus_engine_commit_text ((IBusEngine *)m17n, text);
-    g_object_unref (text);
 }
 
 MSymbol
@@ -536,9 +538,6 @@ ibus_m17n_engine_update_lookup_table (IBusM17NEngine *m17n)
 
         ibus_engine_update_lookup_table ((IBusEngine *)m17n, m17n->table, TRUE);
         ibus_engine_update_auxiliary_text ((IBusEngine *)m17n, text, TRUE);
-
-        g_object_unref (text);
-
     }
     else {
         ibus_engine_hide_lookup_table ((IBusEngine *)m17n);
@@ -571,15 +570,13 @@ ibus_m17n_engine_callback (MInputContext *context,
 
         buf = ibus_m17n_mtext_to_utf8 (m17n->context->preedit);
         if (buf) {
-            text = ibus_text_new_from_string (buf);
+            text = ibus_text_new_from_static_string (buf);
             ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND, 0x00ffffff, 0, -1);
             ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND, 0x00000000, 0, -1);
             ibus_engine_update_preedit_text ((IBusEngine *) m17n,
                                              text,
                                              m17n->context->cursor_pos,
                                              mtext_len (m17n->context->preedit) > 0);
-            g_object_unref (text);
-            g_free (buf);
         }
     }
     else if (command == Minput_preedit_done) {
@@ -597,7 +594,6 @@ ibus_m17n_engine_callback (MInputContext *context,
             text = ibus_text_new_from_string (status);
             ibus_property_set_label (m17n->status_prop, text);
             ibus_property_set_visible (m17n->status_prop, TRUE);
-            g_object_unref (text);
         }
         else {
             ibus_property_set_label (m17n->status_prop, NULL);
