@@ -81,6 +81,7 @@ CLEANFILES = \
 	$(NULL)
 
 m17n.xml: m17n.xml.in
+	$(AM_V_GEN) \
 	( \
 		libexecdir=${libexecdir}; \
 		pkgdatadir=${pkgdatadir}; \
