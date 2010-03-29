@@ -52,7 +52,7 @@ AM_PROG_LIBTOOL
 
 # check ibus
 PKG_CHECK_MODULES(IBUS, [
-    ibus-1.0 >= 1.2.99
+    ibus-1.0 >= 1.3
 ])
 
 # check m17n
