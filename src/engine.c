@@ -9,6 +9,13 @@
 typedef struct _IBusM17NEngine IBusM17NEngine;
 typedef struct _IBusM17NEngineClass IBusM17NEngineClass;
 
+enum IBusM17NFocusState {
+    NO_FOCUS,
+    GOT_FOCUS,
+    HAS_FOCUS,
+    LOST_FOCUS
+};
+
 struct _IBusM17NEngine {
     IBusEngine parent;
 
@@ -17,6 +24,8 @@ struct _IBusM17NEngine {
     IBusLookupTable *table;
     IBusProperty    *status_prop;
     IBusPropList    *prop_list;
+    enum IBusM17NFocusState focus_state;
+    gint cursor_pos;
 };
 
 struct _IBusM17NEngineClass {
@@ -42,7 +51,8 @@ static void ibus_m17n_engine_focus_out      (IBusEngine             *engine);
 static void ibus_m17n_engine_reset          (IBusEngine             *engine);
 static void ibus_m17n_engine_enable         (IBusEngine             *engine);
 static void ibus_m17n_engine_disable        (IBusEngine             *engine);
-static void ibus_engine_set_cursor_location (IBusEngine             *engine,
+static void ibus_m17n_engine_set_cursor_location
+                                            (IBusEngine             *engine,
                                              gint                    x,
                                              gint                    y,
                                              gint                    w,
@@ -129,6 +139,8 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
     engine_class->cursor_down = ibus_m17n_engine_cursor_down;
 
     engine_class->property_activate = ibus_m17n_engine_property_activate;
+
+    engine_class->set_cursor_location = ibus_m17n_engine_set_cursor_location;
 }
 
 static void
@@ -152,6 +164,8 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
     m17n->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
     g_object_ref_sink (m17n->table);
     m17n->context = NULL;
+    m17n->focus_state = NO_FOCUS;
+    m17n->cursor_pos = 0;
 }
 
 static GObject*
@@ -387,6 +401,7 @@ ibus_m17n_engine_focus_in (IBusEngine *engine)
 
     ibus_engine_register_properties (engine, m17n->prop_list);
     ibus_m17n_engine_process_key (m17n, msymbol ("input-focus-in"));
+    m17n->focus_state = GOT_FOCUS;
 
     parent_class->focus_in (engine);
 }
@@ -397,6 +412,7 @@ ibus_m17n_engine_focus_out (IBusEngine *engine)
     IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
 
     ibus_m17n_engine_process_key (m17n, msymbol ("input-focus-out"));
+    m17n->focus_state = LOST_FOCUS;
 
     parent_class->focus_out (engine);
 }
@@ -424,6 +440,7 @@ ibus_m17n_engine_disable (IBusEngine *engine)
     IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
 
     ibus_m17n_engine_focus_out (engine);
+    m17n->focus_state = NO_FOCUS;
     parent_class->disable (engine);
 }
 
@@ -543,6 +560,35 @@ ibus_m17n_engine_update_lookup_table (IBusM17NEngine *m17n)
         ibus_engine_hide_lookup_table ((IBusEngine *)m17n);
         ibus_engine_hide_auxiliary_text ((IBusEngine *)m17n);
     }
+}
+
+static void
+ibus_m17n_engine_set_cursor_location (IBusEngine *engine,
+                                      gint        x,
+                                      gint        y,
+                                      gint        w,
+                                      gint        h)
+{
+    IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
+
+    switch (m17n->focus_state) {
+    case GOT_FOCUS:
+        m17n->focus_state = HAS_FOCUS;
+        break;
+    case HAS_FOCUS:
+        if (m17n->cursor_pos != x) {
+            ibus_m17n_engine_process_key (m17n, msymbol ("input-focus-move"));
+        }
+        m17n->cursor_pos = x;
+        break;
+    case LOST_FOCUS:
+        m17n->focus_state = NO_FOCUS;
+        break;
+    default:
+        break;
+    }
+
+    parent_class->set_cursor_location (engine, x, y, w, h);
 }
 
 static void
