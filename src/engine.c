@@ -351,6 +351,10 @@ ibus_m17n_engine_process_key (IBusM17NEngine *m17n,
     MText *produced;
     gint retval;
 
+    /* XXX: mark as the IME just got focus to prevent
+       "input-focus-move" being sent as a result of key event. */
+    m17n->focus_state = GOT_FOCUS;
+
     retval = minput_filter (m17n->context, key, NULL);
 
     if (retval) {
@@ -574,6 +578,7 @@ ibus_m17n_engine_set_cursor_location (IBusEngine *engine,
     switch (m17n->focus_state) {
     case GOT_FOCUS:
         m17n->focus_state = HAS_FOCUS;
+        m17n->cursor_pos = x;
         break;
     case HAS_FOCUS:
         if (m17n->cursor_pos != x) {
