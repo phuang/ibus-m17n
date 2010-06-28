@@ -524,14 +524,15 @@ ibus_m17n_engine_update_lookup_table (IBusM17NEngine *m17n)
 
         if (mplist_key (group) == Mtext) {
             MText *mt;
-            gunichar *buf, *p;
+            gunichar *buf;
+            glong nchars, i;
 
             mt = (MText *) mplist_value (group);
             ibus_lookup_table_set_page_size (m17n->table, mtext_len (mt));
 
-            buf = ibus_m17n_mtext_to_ucs4 (mt);
-            for (p = buf + 1; *p != 0; p++) {
-                ibus_lookup_table_append_candidate (m17n->table, ibus_text_new_from_unichar (*p));
+            buf = ibus_m17n_mtext_to_ucs4 (mt, &nchars);
+            for (i = 0; i < nchars; i++) {
+                ibus_lookup_table_append_candidate (m17n->table, ibus_text_new_from_unichar (buf[i]));
             }
             g_free (buf);
         }

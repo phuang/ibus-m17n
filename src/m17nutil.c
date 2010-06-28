@@ -5,7 +5,6 @@
 #define N_(text) text
 
 static MConverter *utf8_converter = NULL;
-static MConverter *utf32_converter = NULL;
 
 static const gchar *keymap[] = {
     "m17n:as:phonetic",
@@ -35,10 +34,6 @@ ibus_m17n_init (void)
     if (utf8_converter == NULL) {
         utf8_converter = mconv_buffer_converter (Mcoding_utf_8, NULL, 0);
     }
-
-    if (utf32_converter == NULL) {
-        utf32_converter = mconv_buffer_converter (Mcoding_utf_32, NULL, 0);
-    }
 }
 
 gchar *
@@ -64,25 +59,28 @@ ibus_m17n_mtext_to_utf8 (MText *text)
 }
 
 gunichar *
-ibus_m17n_mtext_to_ucs4 (MText *text)
+ibus_m17n_mtext_to_ucs4 (MText *text, glong *nchars)
 {
-    gint bufsize;
-    gunichar *buf;
+    glong bufsize;
+    gchar *buf;
+    gunichar *ucs;
 
     if (text == NULL)
         return NULL;
 
-    mconv_reset_converter (utf32_converter);
+    mconv_reset_converter (utf8_converter);
 
-    bufsize = (mtext_len (text) + 2) * sizeof (gunichar);
-    buf = (gunichar *) g_malloc (bufsize);
+    bufsize = (mtext_len (text) + 1) * 6;
+    buf = (gchar *) g_malloc (bufsize);
 
-    mconv_rebind_buffer (utf32_converter, (gchar *)buf, bufsize);
-    mconv_encode (utf32_converter, text);
-
-    buf [utf32_converter->nchars] = 0;
-
-    return buf;
+    mconv_rebind_buffer (utf8_converter, buf, bufsize);
+    if (mconv_encode (utf8_converter, text) < 0) {
+        g_free (buf);
+        return NULL;
+    }
+    ucs = g_utf8_to_ucs4_fast (buf, bufsize, nchars);
+    g_free (buf);
+    return ucs;
 }
 
 static IBusEngineDesc *
