@@ -268,12 +268,31 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
 }
 
 static void
+ibus_m17n_engine_update_preedit (IBusM17NEngine *m17n)
+{
+    IBusText *text;
+    gchar *buf;
+
+    buf = ibus_m17n_mtext_to_utf8 (m17n->context->preedit);
+    if (buf) {
+        text = ibus_text_new_from_static_string (buf);
+        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND, 0x00ffffff, 0, -1);
+        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND, 0x00000000, 0, -1);
+        ibus_engine_update_preedit_text ((IBusEngine *) m17n,
+                                         text,
+                                         m17n->context->cursor_pos,
+                                         mtext_len (m17n->context->preedit) > 0);
+    }
+}
+
+static void
 ibus_m17n_engine_commit_string (IBusM17NEngine *m17n,
                                 const gchar    *string)
 {
     IBusText *text;
     text = ibus_text_new_from_static_string (string);
     ibus_engine_commit_text ((IBusEngine *)m17n, text);
+    ibus_m17n_engine_update_preedit (m17n);
 }
 
 MSymbol
@@ -617,19 +636,7 @@ ibus_m17n_engine_callback (MInputContext *context,
         ibus_engine_hide_preedit_text ((IBusEngine *)m17n);
     }
     else if (command == Minput_preedit_draw) {
-        IBusText *text;
-        gchar *buf;
-
-        buf = ibus_m17n_mtext_to_utf8 (m17n->context->preedit);
-        if (buf) {
-            text = ibus_text_new_from_static_string (buf);
-            ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND, 0x00ffffff, 0, -1);
-            ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND, 0x00000000, 0, -1);
-            ibus_engine_update_preedit_text ((IBusEngine *) m17n,
-                                             text,
-                                             m17n->context->cursor_pos,
-                                             mtext_len (m17n->context->preedit) > 0);
-        }
+        ibus_m17n_engine_update_preedit (m17n);
     }
     else if (command == Minput_preedit_done) {
         ibus_engine_hide_preedit_text ((IBusEngine *)m17n);
