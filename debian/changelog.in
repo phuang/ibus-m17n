@@ -1,0 +1,5 @@
+ibus-m17n (${version}-1phuang${release}~${serie}1) ${serie}; urgency=low
+
+  * Build for ubuntu ppa
+
+ -- Peng Huang <shawn.p.huang@gmail.com>  ${date}

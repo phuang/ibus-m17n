@@ -61,4 +61,45 @@ srpm: dist @PACKAGE_NAME@.spec
 clean-rpm:
 	$(RM) -r "`uname -i`"
 
+.PHONY: debian/changelog
+debian/changelog:
+	$(AM_V_GEN) \
+	( \
+		date=`date -R`; \
+		version=@VERSION@; \
+		serie=$(serie); \
+		if test -z "$$serie"; then \
+		  serie=lucid; \
+		fi; \
+		if test -z "$$release"; then \
+		  release=1; \
+		fi; \
+		s=`cat debian/changelog.in`; \
+		eval "echo \"$${s}\""; \
+	) > $@
+
+ppa: dist debian/changelog
+	$(AM_V_GEN) \
+	( \
+		mkdir ppa; \
+		cd ppa; \
+		tar zxvf ../$(distdir).tar.gz ; \
+		cd $(distdir); \
+		cp -a ../../debian . ; \
+		cd debian; \
+		debuild -S -sa ; \
+	)
+
+dpkg: dist debian/changelog
+	$(AM_V_GEN) \
+	( \
+		mkdir ppa; \
+		cd ppa; \
+		tar zxvf ../$(distdir).tar.gz ; \
+		cd $(distdir); \
+		cp -a ../../debian . ; \
+		cd debian; \
+		debuild -b ; \
+	)
+
 clean-local: clean-rpm
