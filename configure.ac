@@ -60,10 +60,6 @@ PKG_CHECK_MODULES(M17N, [
     m17n-shell
 ])
 
-# check env
-AC_PATH_PROG(ENV, env)
-AC_SUBST(ENV)
-
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-m17n
 AC_SUBST(GETTEXT_PACKAGE)
