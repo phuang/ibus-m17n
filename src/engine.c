@@ -281,6 +281,22 @@ ibus_m17n_engine_commit_string (IBusM17NEngine *m17n,
     ibus_m17n_engine_update_preedit (m17n);
 }
 
+/* Note on AltGr handling: While currently we expect mod5 == AltGr, it
+   would be better to not expect the modifier always be assigned
+   to particular modX.  However, it needs some code like (from
+   m17n-lib):
+
+   KeyCode altgr = XKeysymToKeycode (display, XK_ISO_Level3_Shift);
+   XModifierKeymap *mods = XGetModifierMapping (display);
+   for (i = 3; i < 8; i++)
+   for (j = 0; j < mods->max_keypermod; j++) {
+   KeyCode code = mods->modifiermap[i * mods->max_keypermod + j];
+   if (code == altgr)
+   ...
+   }
+                
+   Since IBus engines are supposed to be cross-platform, the code
+   should go into IBus core, instead of ibus-m17n. */
 MSymbol
 ibus_m17n_key_event_to_symbol (guint keycode,
                                guint keyval,
@@ -290,16 +306,21 @@ ibus_m17n_key_event_to_symbol (guint keycode,
     MSymbol mkeysym = Mnil;
     guint mask = 0;
     IBusKeymap *keymap;
+    guint base_keyval;
 
     if (keyval >= IBUS_Shift_L && keyval <= IBUS_Hyper_R) {
         return Mnil;
     }
 
-    keysym = g_string_new ("");
     keymap = ibus_keymap_get ("us");
+    base_keyval = ibus_keymap_lookup_keysym (keymap, keycode, 0);
+    g_object_unref (keymap);
 
-    if (keyval >= IBUS_space && keyval <= IBUS_asciitilde) {
-        guint c = ibus_keymap_lookup_keysym (keymap, keycode, 0);
+    keysym = g_string_new ("");
+
+    if (base_keyval >= IBUS_space && base_keyval <= IBUS_asciitilde) {
+        gint c = (modifiers & IBUS_MOD5_MASK) ? base_keyval : keyval;
+
         if (keyval == IBUS_space && modifiers & IBUS_SHIFT_MASK)
             mask |= IBUS_SHIFT_MASK;
 
@@ -333,22 +354,6 @@ ibus_m17n_key_event_to_symbol (guint keycode,
     if (mask & IBUS_SUPER_MASK) {
         g_string_prepend (keysym, "s-");
     }
-    /* AltGr handling: While currently we expect mod5 == AltGr, it
-       would be better to not expect the modifier always be assigned
-       to particular modX.  However, it needs some code like (from
-       m17n-lib):
-
-       KeyCode altgr = XKeysymToKeycode (display, XK_ISO_Level3_Shift);
-       XModifierKeymap *mods = XGetModifierMapping (display);
-       for (i = 3; i < 8; i++)
-         for (j = 0; j < mods->max_keypermod; j++) {
-           KeyCode code = mods->modifiermap[i * mods->max_keypermod + j];
-           if (code == altgr)
-             ...
-       }
-                
-       Since IBus engines are supposed to be cross-platform, the code
-       should go into IBus core, instead of ibus-m17n. */
     if (mask & IBUS_MOD5_MASK) {
         g_string_prepend (keysym, "G-");
     }
