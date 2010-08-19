@@ -282,21 +282,24 @@ ibus_m17n_engine_commit_string (IBusM17NEngine *m17n,
 }
 
 MSymbol
-ibus_m17n_key_event_to_symbol (guint keyval,
+ibus_m17n_key_event_to_symbol (guint keycode,
+                               guint keyval,
                                guint modifiers)
 {
     GString *keysym;
     MSymbol mkeysym = Mnil;
     guint mask = 0;
+    IBusKeymap *keymap;
 
     if (keyval >= IBUS_Shift_L && keyval <= IBUS_Hyper_R) {
         return Mnil;
     }
 
     keysym = g_string_new ("");
+    keymap = ibus_keymap_get ("us");
 
     if (keyval >= IBUS_space && keyval <= IBUS_asciitilde) {
-        gint c = keyval;
+        guint c = ibus_keymap_lookup_keysym (keymap, keycode, 0);
         if (keyval == IBUS_space && modifiers & IBUS_SHIFT_MASK)
             mask |= IBUS_SHIFT_MASK;
 
@@ -411,7 +414,7 @@ ibus_m17n_engine_process_key_event (IBusEngine     *engine,
 
     if (modifiers & IBUS_RELEASE_MASK)
         return FALSE;
-    MSymbol m17n_key = ibus_m17n_key_event_to_symbol (keyval, modifiers);
+    MSymbol m17n_key = ibus_m17n_key_event_to_symbol (keycode, keyval, modifiers);
 
     if (m17n_key == Mnil)
         return FALSE;
