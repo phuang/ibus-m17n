@@ -60,6 +60,11 @@ PKG_CHECK_MODULES(M17N, [
     m17n-shell
 ])
 
+# check gtk for setup
+PKG_CHECK_MODULES(GTK2, [
+    gtk+-2.0
+])
+
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-m17n
 AC_SUBST(GETTEXT_PACKAGE)

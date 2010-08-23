@@ -39,10 +39,10 @@ start_component (void)
     IBusComponent *component;
 
     ibus_init ();
-    ibus_m17n_init ();
 
     bus = ibus_bus_new ();
     g_signal_connect (bus, "disconnected", G_CALLBACK (ibus_disconnected_cb), NULL);
+    ibus_m17n_init (bus);
 
     component = ibus_m17n_get_component ();
 
@@ -73,7 +73,9 @@ print_engines_xml (void)
     GString *output;
 
     ibus_init ();
-    ibus_m17n_init ();
+
+    bus = ibus_bus_new ();
+    ibus_m17n_init (bus);
 
     component = ibus_m17n_get_component ();
     output = g_string_new ("");

@@ -16,7 +16,9 @@ struct _IBusM17NEngine {
     MInputContext *context;
     IBusLookupTable *table;
     IBusProperty    *status_prop;
+    IBusProperty    *setup_prop;
     IBusPropList    *prop_list;
+    gchar *config_section;
 };
 
 struct _IBusM17NEngineClass {
@@ -70,9 +72,27 @@ static void ibus_m17n_engine_commit_string
                                              const gchar            *string);
 static void ibus_m17n_engine_callback       (MInputContext          *context,
                                              MSymbol                 command);
+static void ibus_m17n_engine_update_preedit (IBusM17NEngine *m17n);
+static void ibus_m17n_engine_update_lookup_table
+                                            (IBusM17NEngine *m17n);
 
 static IBusEngineClass *parent_class = NULL;
 static GHashTable      *im_table = NULL;
+
+static IBusConfig      *config = NULL;
+static guint            preedit_foreground = INVALID_COLOR;
+static guint            preedit_background = INVALID_COLOR;
+static gint             preedit_underline = IBUS_ATTR_UNDERLINE_NONE;
+static gint             lookup_table_orientation = IBUS_ORIENTATION_SYSTEM;
+
+void
+ibus_m17n_init (IBusBus *bus)
+{
+    config = ibus_bus_get_config (bus);
+    if (config)
+        g_object_ref_sink (config);
+    ibus_m17n_init_common ();
+}
 
 GType
 ibus_m17n_engine_get_type (void)
@@ -132,8 +152,48 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 }
 
 static void
+ibus_config_value_changed (IBusConfig   *config,
+                           const gchar  *section,
+                           const gchar  *name,
+                           GValue       *value,
+                           gpointer      user_data)
+{
+    IBusM17NEngine *m17n = (IBusM17NEngine *) user_data;
+
+    if (g_strcmp0 (section, m17n->config_section) == 0) {
+        if (g_strcmp0 (name, "preedit_foreground") == 0) {
+            const gchar *hex = g_value_get_string (value);
+            guint color;
+            color = ibus_m17n_parse_color (hex);
+            if (color != INVALID_COLOR) {
+                preedit_foreground = color;
+                ibus_m17n_engine_update_preedit (m17n);
+            }
+        } else if (g_strcmp0 (name, "preedit_background") == 0) {
+            const gchar *hex = g_value_get_string (value);
+            guint color;
+            color = ibus_m17n_parse_color (hex);
+            if (color != INVALID_COLOR) {
+                preedit_background = color;
+                ibus_m17n_engine_update_preedit (m17n);
+            }
+        } else if (g_strcmp0 (name, "preedit_underline") == 0) {
+            preedit_underline = g_value_get_int (value);
+            ibus_m17n_engine_update_preedit (m17n);
+        } else if (g_strcmp0 (name, "lookup_table_orientation") == 0) {
+            lookup_table_orientation = g_value_get_int (value);
+            ibus_m17n_engine_update_lookup_table (m17n);
+        }
+    }
+}
+
+static void
 ibus_m17n_engine_init (IBusM17NEngine *m17n)
 {
+    IBusText* label;
+    IBusText* tooltip;
+    const gchar *engine_name;
+
     m17n->status_prop = ibus_property_new ("status",
                                            PROP_TYPE_NORMAL,
                                            NULL,
@@ -145,9 +205,23 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
                                            NULL);
     g_object_ref_sink (m17n->status_prop);
 
+    label = ibus_text_new_from_string ("Setup");
+    tooltip = ibus_text_new_from_string ("Configure M17N engine");
+    m17n->setup_prop = ibus_property_new ("setup",
+                                          PROP_TYPE_NORMAL,
+                                          label,
+                                          "gtk-preferences",
+                                          tooltip,
+                                          TRUE,
+                                          TRUE,
+                                          PROP_STATE_UNCHECKED,
+                                          NULL);
+    g_object_ref_sink (m17n->setup_prop);
+
     m17n->prop_list = ibus_prop_list_new ();
     g_object_ref_sink (m17n->prop_list);
     ibus_prop_list_append (m17n->prop_list,  m17n->status_prop);
+    ibus_prop_list_append (m17n->prop_list, m17n->setup_prop);
 
     m17n->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
     g_object_ref_sink (m17n->table);
@@ -162,6 +236,11 @@ ibus_m17n_engine_constructor (GType                   type,
     IBusM17NEngine *m17n;
     MInputMethod *im;
     const gchar *engine_name;
+    gchar *lang;
+    gchar *name;
+    gchar **strv;
+    GValue value = { 0 };
+    gboolean preedit_highlight;
 
     m17n = (IBusM17NEngine *) G_OBJECT_CLASS (parent_class)->constructor (type,
                                                        n_construct_params,
@@ -169,6 +248,14 @@ ibus_m17n_engine_constructor (GType                   type,
 
     engine_name = ibus_engine_get_name ((IBusEngine *) m17n);
     g_assert (engine_name);
+
+    strv = g_strsplit (engine_name, ":", 3);
+
+    g_assert (g_strv_length (strv) == 3);
+    g_assert (g_strcmp0 (strv[0], "m17n") == 0);
+
+    lang = strv[1];
+    name = strv[2];
 
     if (im_table == NULL) {
         im_table = g_hash_table_new_full (g_str_hash,
@@ -179,18 +266,6 @@ ibus_m17n_engine_constructor (GType                   type,
 
     im = (MInputMethod *) g_hash_table_lookup (im_table, engine_name);
     if (im == NULL) {
-        gchar *lang;
-        gchar *name;
-        gchar **strv;
-
-        strv = g_strsplit (engine_name, ":", 3);
-
-        g_assert (g_strv_length (strv) == 3);
-        g_assert (g_strcmp0 (strv[0], "m17n") == 0);
-
-        lang = strv[1];
-        name = strv[2];
-
         im = minput_open_im (msymbol (lang), msymbol (name), NULL);
         if (im != NULL) {
             mplist_put (im->driver.callback_list, Minput_preedit_start, ibus_m17n_engine_callback);
@@ -210,18 +285,67 @@ ibus_m17n_engine_constructor (GType                   type,
 
             g_hash_table_insert (im_table, g_strdup (engine_name), im);
         }
-
-        g_strfreev (strv);
     }
 
     if (im == NULL) {
         g_warning ("Can not find m17n keymap %s", engine_name);
+        g_strfreev (strv);
         g_object_unref (m17n);
         return NULL;
     }
 
     m17n->context = minput_create_ic (im, NULL);
     mplist_add (m17n->context->plist, msymbol ("IBusEngine"), m17n);
+
+    m17n->config_section = g_strdup_printf ("engine/M17N/%s/%s",
+                                            lang, name);
+    g_strfreev (strv);
+
+    preedit_highlight = ibus_m17n_preedit_highlight (engine_name);
+    if (ibus_config_get_value (config,
+                               m17n->config_section,
+                               "preedit_foreground",
+                               &value)) {
+        const gchar *hex = g_value_get_string (&value);
+        guint color = ibus_m17n_parse_color (hex);
+        if (color != (guint)-1)
+            preedit_foreground = color;
+        g_value_unset (&value);
+    } else if (preedit_highlight)
+        preedit_foreground = PREEDIT_FOREGROUND;
+
+    if (ibus_config_get_value (config,
+                               m17n->config_section,
+                               "preedit_background",
+                               &value)) {
+        const gchar *hex = g_value_get_string (&value);
+        guint color = ibus_m17n_parse_color (hex);
+        if (color != (guint)-1)
+            preedit_background = color;
+        g_value_unset (&value);
+    } else if (preedit_highlight)
+        preedit_background = PREEDIT_BACKGROUND;
+
+    if (ibus_config_get_value (config,
+                               m17n->config_section,
+                               "preedit_underline",
+                               &value)) {
+        preedit_underline = g_value_get_int (&value);
+        g_value_unset (&value);
+    } else
+        preedit_underline = IBUS_ATTR_UNDERLINE_NONE;
+
+    if (ibus_config_get_value (config,
+                               m17n->config_section,
+                               "lookup_table_orientation",
+                               &value)) {
+        lookup_table_orientation = g_value_get_int (&value);
+        g_value_unset (&value);
+    } else
+        lookup_table_orientation = IBUS_ORIENTATION_SYSTEM;
+
+    g_signal_connect (config, "value-changed",
+                      G_CALLBACK(ibus_config_value_changed), m17n);
 
     return (GObject *) m17n;
 }
@@ -240,6 +364,11 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
         m17n->status_prop = NULL;
     }
 
+    if (m17n->setup_prop) {
+        g_object_unref (m17n->setup_prop);
+        m17n->setup_prop = NULL;
+    }
+
     if (m17n->table) {
         g_object_unref (m17n->table);
         m17n->table = NULL;
@@ -248,6 +377,11 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
     if (m17n->context) {
         minput_destroy_ic (m17n->context);
         m17n->context = NULL;
+    }
+
+    if (m17n->config_section) {
+        g_free (m17n->config_section);
+        m17n->config_section = NULL;
     }
 
     IBUS_OBJECT_CLASS (parent_class)->destroy ((IBusObject *)m17n);
@@ -262,8 +396,14 @@ ibus_m17n_engine_update_preedit (IBusM17NEngine *m17n)
     buf = ibus_m17n_mtext_to_utf8 (m17n->context->preedit);
     if (buf) {
         text = ibus_text_new_from_static_string (buf);
-        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND, 0x00ffffff, 0, -1);
-        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND, 0x00000000, 0, -1);
+        if (preedit_foreground != INVALID_COLOR)
+            ibus_text_append_attribute (text, IBUS_ATTR_TYPE_FOREGROUND,
+                                        preedit_foreground, 0, -1);
+        if (preedit_background != INVALID_COLOR)
+            ibus_text_append_attribute (text, IBUS_ATTR_TYPE_BACKGROUND,
+                                        preedit_background, 0, -1);
+        ibus_text_append_attribute (text, IBUS_ATTR_TYPE_UNDERLINE,
+                                    preedit_underline, 0, -1);
         ibus_engine_update_preedit_text ((IBusEngine *) m17n,
                                          text,
                                          m17n->context->cursor_pos,
@@ -517,6 +657,19 @@ ibus_m17n_engine_property_activate (IBusEngine  *engine,
                                     const gchar *prop_name,
                                     guint        prop_state)
 {
+    IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
+
+    if (g_strcmp0 (prop_name, "setup") == 0) {
+        const gchar *engine_name;
+        gchar *setup;
+
+        engine_name = ibus_engine_get_name ((IBusEngine *) m17n);
+        g_assert (engine_name);
+        setup = g_strdup_printf ("%s/ibus-setup-m17n --name %s",
+                                 LIBEXECDIR, engine_name);
+        g_spawn_command_line_async (setup, NULL);
+        g_free (setup);
+    }
     parent_class->property_activate (engine, prop_name, prop_state);
 }
 
@@ -581,6 +734,8 @@ ibus_m17n_engine_update_lookup_table (IBusM17NEngine *m17n)
         }
 
         ibus_lookup_table_set_cursor_pos (m17n->table, m17n->context->candidate_index - i);
+        ibus_lookup_table_set_orientation (m17n->table, lookup_table_orientation);
+
         text = ibus_text_new_from_printf ("( %d / %d )", page, mplist_length (m17n->context->candidate_list));
 
         ibus_engine_update_lookup_table ((IBusEngine *)m17n, m17n->table, TRUE);

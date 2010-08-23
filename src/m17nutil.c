@@ -1,5 +1,6 @@
 /* vim:set et sts=4: */
 #include <string.h>
+#include <errno.h>
 #include "m17nutil.h"
 
 #define N_(text) text
@@ -26,8 +27,21 @@ static const gchar *keymap[] = {
     "m17n:te:inscript"
 };
 
+static const gchar *preedit_highlight[] = {
+    "m17n:ja:anthy",
+    "m17n:zh:cangjie",
+    "m17n:zh:py-b5",
+    "m17n:zh:py-gb",
+    "m17n:zh:py",
+    "m17n:zh:quick",
+    "m17n:zh:tonepy-b5",
+    "m17n:zh:tonepy-gb",
+    "m17n:zh:tonepy",
+    "m17n:zh:util",
+};
+
 void
-ibus_m17n_init (void)
+ibus_m17n_init_common (void)
 {
     M17N_INIT ();
 
@@ -81,6 +95,17 @@ ibus_m17n_mtext_to_ucs4 (MText *text, glong *nchars)
     ucs = g_utf8_to_ucs4_fast (buf, bufsize, nchars);
     g_free (buf);
     return ucs;
+}
+
+guint
+ibus_m17n_parse_color (const gchar *hex)
+{
+    guint color;
+    if (hex && *hex == '#' &&
+        ((color = strtoul (&hex[1], NULL, 16)) != ULONG_MAX ||
+         errno != ERANGE))
+        return color;
+    return (guint)-1;
 }
 
 static IBusEngineDesc *
@@ -241,6 +266,18 @@ ibus_m17n_get_component (void)
     return component;
 }
 
+gboolean
+ibus_m17n_preedit_highlight (const gchar *engine_name)
+{
+    gint i;
+
+    for (i = 0; i < G_N_ELEMENTS(preedit_highlight); i++) {
+        if (strcmp (engine_name, preedit_highlight[i]) == 0)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 #ifdef DEBUG
 #include <locale.h>
 
@@ -251,7 +288,7 @@ int main ()
 
     setlocale (LC_ALL, "");
     ibus_init ();
-    ibus_m17n_init();
+    ibus_m17n_init_common ();
 
     component = ibus_m17n_get_component ();
 

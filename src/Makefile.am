@@ -48,7 +48,7 @@ test_m17n_LDADD = \
 	$(AM_LDADD) \
 	$(NULL)
 
-libexec_PROGRAMS = ibus-engine-m17n
+libexec_PROGRAMS = ibus-engine-m17n ibus-setup-m17n
 
 ibus_engine_m17n_SOURCES = \
 	m17nutil.c \
@@ -61,10 +61,33 @@ ibus_engine_m17n_CFLAGS = \
 	@IBUS_CFLAGS@ \
 	@M17N_CFLAGS@ \
 	-DPKGDATADIR=\"$(pkgdatadir)\" \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
 	$(NULL)
 ibus_engine_m17n_LDADD = \
 	@IBUS_LIBS@ \
 	@M17N_LIBS@ \
+	$(NULL)
+
+setup_DATA = \
+	ibus-m17n-preferences.ui \
+	$(NULL)
+setupdir = $(pkgdatadir)/setup
+
+ibus_setup_m17n_SOURCES = \
+	m17nutil.c \
+	m17nutil.h \
+	setup.c \
+	$(NULL)
+ibus_setup_m17n_CFLAGS = \
+	@IBUS_CFLAGS@ \
+	@M17N_CFLAGS@ \
+	@GTK2_CFLAGS@ \
+	-DSETUPDIR=\"$(setupdir)\" \
+	$(NULL)
+ibus_setup_m17n_LDADD = \
+	@IBUS_LIBS@ \
+	@M17N_LIBS@ \
+	@GTK2_LIBS@ \
 	$(NULL)
 
 component_DATA = \
@@ -74,6 +97,7 @@ componentdir = @datadir@/ibus/component
 
 EXTRA_DIST = \
 	m17n.xml.in \
+	$(setup_DATA) \
 	$(NULL)
 
 CLEANFILES = \
