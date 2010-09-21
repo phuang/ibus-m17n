@@ -78,8 +78,6 @@ static void ibus_m17n_engine_update_lookup_table
 
 static IBusEngineClass *parent_class = NULL;
 static GHashTable      *im_table = NULL;
-/* The hash table associates MInputContext with IBusM17nEngine. */
-static GHashTable      *m17n_inputcontexts = NULL;
 
 static IBusConfig      *config = NULL;
 static guint            preedit_foreground = INVALID_COLOR;
@@ -152,7 +150,6 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 
     engine_class->property_activate = ibus_m17n_engine_property_activate;
 
-    m17n_inputcontexts = g_hash_table_new (g_direct_hash, g_direct_equal);
 }
 
 static void
@@ -301,8 +298,7 @@ ibus_m17n_engine_constructor (GType                   type,
         return NULL;
     }
 
-    m17n->context = minput_create_ic (im, NULL);
-    g_hash_table_insert (m17n_inputcontexts, m17n->context, m17n);
+    m17n->context = minput_create_ic (im, m17n);
 
     m17n->config_section = g_strdup_printf ("engine/M17N/%s/%s",
                                             lang, name);
@@ -382,7 +378,6 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
     }
 
     if (m17n->context) {
-        g_hash_table_remove (m17n_inputcontexts, m17n->context);
         minput_destroy_ic (m17n->context);
         m17n->context = NULL;
     }
@@ -762,8 +757,14 @@ ibus_m17n_engine_callback (MInputContext *context,
 {
     IBusM17NEngine *m17n = NULL;
 
-    m17n = g_hash_table_lookup (m17n_inputcontexts, context);
+    m17n = context->arg;
     g_return_if_fail (m17n != NULL);
+
+    /* the callback may be called in minput_create_ic, in the time
+     * m17n->context has not be assigned, so need assign it. */
+    if (m17n->context == NULL) {
+        m17n->context = context;
+    }
 
     if (command == Minput_preedit_start) {
         ibus_engine_hide_preedit_text ((IBusEngine *)m17n);
