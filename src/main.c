@@ -74,8 +74,7 @@ print_engines_xml (void)
 
     ibus_init ();
 
-    bus = ibus_bus_new ();
-    ibus_m17n_init (bus);
+    ibus_m17n_init_common ();
 
     component = ibus_m17n_get_component ();
     output = g_string_new ("");
