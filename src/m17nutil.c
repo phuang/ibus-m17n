@@ -7,37 +7,60 @@
 
 static MConverter *utf8_converter = NULL;
 
-static const gchar *keymap[] = {
-    "m17n:as:phonetic",
-    "m17n:bn:inscript",
-    "m17n:gu:inscript",
-    "m17n:hi:inscript",
-    "m17n:kn:kgp",
-    "m17n:ks:kbd",
-    "m17n:mai:inscript",
-    "m17n:ml:inscript",
-    "m17n:mr:inscript",
-    "m17n:ne:rom",
-    "m17n:or:inscript",
-    "m17n:pa:inscript",
-    "m17n:sa:harvard-kyoto",
-    "m17n:sd:inscript",
-    "m17n:si:wijesekera",
-    "m17n:ta:tamil99",
-    "m17n:te:inscript"
-};
-
-static const gchar *preedit_highlight[] = {
-    "m17n:ja:anthy",
-    "m17n:zh:cangjie",
-    "m17n:zh:py-b5",
-    "m17n:zh:py-gb",
-    "m17n:zh:py",
-    "m17n:zh:quick",
-    "m17n:zh:tonepy-b5",
-    "m17n:zh:tonepy-gb",
-    "m17n:zh:tonepy",
-    "m17n:zh:util",
+static const struct {
+    const gchar *name;
+    gint rank;                  /* engine rank (default 0) */
+    gboolean preedit_highlight; /* whether to highlight preedit (default 0) */
+} engine_config[] = {
+    /* Indic engines which represent languages. */
+    {"m17n:as:phonetic", 2, FALSE},
+    {"m17n:bn:inscript", 2, FALSE},
+    {"m17n:gu:inscript", 2, FALSE},
+    {"m17n:hi:inscript", 2, FALSE},
+    {"m17n:kn:kgp", 2, FALSE},
+    {"m17n:ks:kbd", 2, FALSE},
+    {"m17n:mai:inscript", 2, FALSE},
+    {"m17n:ml:inscript", 2, FALSE},
+    {"m17n:mr:inscript", 2, FALSE},
+    {"m17n:ne:rom", 2, FALSE},
+    {"m17n:or:inscript", 2, FALSE},
+    {"m17n:pa:inscript", 2, FALSE},
+    {"m17n:sa:harvard-kyoto", 2, FALSE},
+    {"m17n:sd:inscript", 2, FALSE},
+    {"m17n:si:wijesekera", 2, FALSE},
+    {"m17n:ta:tamil99", 2, FALSE},
+    {"m17n:te:inscript", 2, FALSE},
+    /* Other Indic engines should be selected by default:
+       https://bugzilla.redhat.com/show_bug.cgi?id=640896
+     */
+    {"m17n:as:*", 1, FALSE},
+    {"m17n:bn:*", 1, FALSE},
+    {"m17n:gu:*", 1, FALSE},
+    {"m17n:hi:*", 1, FALSE},
+    {"m17n:kn:*", 1, FALSE},
+    {"m17n:ks:*", 1, FALSE},
+    {"m17n:mai:*", 1, FALSE},
+    {"m17n:ml:*", 1, FALSE},
+    {"m17n:mr:*", 1, FALSE},
+    {"m17n:ne:*", 1, FALSE},
+    {"m17n:or:*", 1, FALSE},
+    {"m17n:pa:*", 1, FALSE},
+    {"m17n:sa:*", 1, FALSE},
+    {"m17n:sd:*", 1, FALSE},
+    {"m17n:si:*", 1, FALSE},
+    {"m17n:ta:*", 1, FALSE},
+    {"m17n:te:*", 1, FALSE},
+    /* Chinese and Japanese engines which require preedit decoration. */
+    {"m17n:ja:anthy", 0, TRUE},
+    {"m17n:zh:cangjie", 0, TRUE},
+    {"m17n:zh:py-b5", 0, TRUE},
+    {"m17n:zh:py-gb", 0, TRUE},
+    {"m17n:zh:py", 0, TRUE},
+    {"m17n:zh:quick", 0, TRUE},
+    {"m17n:zh:tonepy-b5", 0, TRUE},
+    {"m17n:zh:tonepy-gb", 0, TRUE},
+    {"m17n:zh:tonepy", 0, TRUE},
+    {"m17n:zh:util", 0, TRUE}
 };
 
 void
@@ -141,10 +164,10 @@ ibus_m17n_engine_new (MSymbol  lang,
     /* set default rank to 0 */
     engine->rank = 0;
 
-    for (i = 0; i < G_N_ELEMENTS(keymap); i++) {
-        if (strcmp (engine_name, keymap[i]) == 0) {
+    for (i = 0; i < G_N_ELEMENTS(engine_config); i++) {
+        if (g_pattern_match_simple (engine_config[i].name, engine_name)) {
             /* set rank of default keymap to 1 */
-            engine->rank = 1;
+            engine->rank = engine_config[i].rank;
             break;
         }
     }
@@ -271,9 +294,9 @@ ibus_m17n_preedit_highlight (const gchar *engine_name)
 {
     gint i;
 
-    for (i = 0; i < G_N_ELEMENTS(preedit_highlight); i++) {
-        if (strcmp (engine_name, preedit_highlight[i]) == 0)
-            return TRUE;
+    for (i = 0; i < G_N_ELEMENTS(engine_config); i++) {
+        if (g_pattern_match_simple (engine_config[i].name, engine_name))
+            return engine_config[i].preedit_highlight;
     }
     return FALSE;
 }
