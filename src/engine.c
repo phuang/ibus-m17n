@@ -424,9 +424,9 @@ ibus_m17n_engine_commit_string (IBusM17NEngine *m17n,
     ibus_m17n_engine_update_preedit (m17n);
 }
 
-/* Note on AltGr handling: While currently we expect AltGr == mod5, it
-   would be better to not expect the modifier always be assigned
-   to particular modX.  However, it needs some code like:
+/* Note on AltGr (Level3 Shift) handling: While currently we expect
+   AltGr == mod5, it would be better to not expect the modifier always
+   be assigned to particular modX.  However, it needs some code like:
 
    KeyCode altgr = XKeysymToKeycode (display, XK_ISO_Level3_Shift);
    XModifierKeymap *mods = XGetModifierMapping (display);
@@ -448,20 +448,26 @@ ibus_m17n_key_event_to_symbol (guint keycode,
     MSymbol mkeysym = Mnil;
     guint mask = 0;
     IBusKeymap *keymap;
-    guint base_keyval;
 
     if (keyval >= IBUS_Shift_L && keyval <= IBUS_Hyper_R) {
         return Mnil;
     }
 
-    keymap = ibus_keymap_get ("us");
-    base_keyval = ibus_keymap_lookup_keysym (keymap, keycode, 0);
-    g_object_unref (keymap);
+    /* Here, keyval is already translated by IBUS_MOD5_MASK.  Obtain
+       the untranslated keyval from the underlying keymap and
+       represent the translated keyval as the form "G-<untranslated
+       keyval>", which m17n-lib accepts. */
+    if (modifiers & IBUS_MOD5_MASK) {
+        keymap = ibus_keymap_get ("us");
+        keyval = ibus_keymap_lookup_keysym (keymap, keycode,
+                                            modifiers & ~IBUS_MOD5_MASK);
+        g_object_unref (keymap);
+    }
 
     keysym = g_string_new ("");
 
-    if (base_keyval >= IBUS_space && base_keyval <= IBUS_asciitilde) {
-        gint c = (modifiers & IBUS_MOD5_MASK) ? base_keyval : keyval;
+    if (keyval >= IBUS_space && keyval <= IBUS_asciitilde) {
+        gint c = keyval;
 
         if (keyval == IBUS_space && modifiers & IBUS_SHIFT_MASK)
             mask |= IBUS_SHIFT_MASK;
