@@ -124,11 +124,16 @@ guint
 ibus_m17n_parse_color (const gchar *hex)
 {
     guint color;
-    if (hex && *hex == '#' &&
-        ((color = strtoul (&hex[1], NULL, 16)) != ULONG_MAX ||
-         errno != ERANGE))
-        return color;
-    return (guint)-1;
+
+    if (!hex || *hex != '#')
+        return (guint)-1;
+
+    errno = 0;
+    color = strtoul (&hex[1], NULL, 16);
+    if ((errno == ERANGE && color == ULONG_MAX)
+        || (errno != 0 && color == 0))
+        return (guint)-1;
+    return color;
 }
 
 static IBusEngineDesc *

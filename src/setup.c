@@ -83,6 +83,7 @@ parse_value (MPlist *plist, gchar *text)
     if (mplist_key (plist) == Minteger) {
         long val;
 
+        errno = 0;
         val = strtol (text, NULL, 10);
         if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
             || (errno != 0 && val == 0))
