@@ -210,10 +210,8 @@ color_to_gdk (guint color, GdkColor *color_gdk)
 static void
 set_color (ConfigContext *context, const gchar *name, GdkColor *color)
 {
-    GValue value = { 0 };
     gchar buf[8];
 
-    g_value_init (&value, G_TYPE_STRING);
     if (color)
         sprintf (buf, "#%02X%02X%02X",
                  (color->red & 0xFF00) >> 8,
@@ -221,8 +219,10 @@ set_color (ConfigContext *context, const gchar *name, GdkColor *color)
                  (color->blue & 0xFF00) >> 8);
     else
         strcpy (buf, "none");
-    g_value_set_string (&value, buf);
-    ibus_config_set_value (config, context->section, name, &value);
+    ibus_config_set_value (config,
+                           context->section,
+                           name,
+                           g_variant_new_string (buf));
 }
 
 static void
@@ -254,17 +254,16 @@ on_underline_changed (GtkComboBox *combo,
     ConfigContext *context = user_data;
     GtkTreeModel *model;
     GtkTreeIter iter;
-    GValue value = { 0 };
     gint active;
 
     model = gtk_combo_box_get_model (combo);
     gtk_combo_box_get_active_iter (combo, &iter);
     gtk_tree_model_get (model, &iter, COLUMN_VALUE, &active, -1);
 
-    g_value_init (&value, G_TYPE_INT);
-    g_value_set_int (&value, active);
-    ibus_config_set_value (config, context->section, "preedit_underline",
-                           &value);
+    ibus_config_set_value (config,
+                           context->section,
+                           "preedit_underline",
+                           g_variant_new_int32 (active));
 }
 
 static void
@@ -274,17 +273,16 @@ on_orientation_changed (GtkComboBox *combo,
     ConfigContext *context = user_data;
     GtkTreeModel *model;
     GtkTreeIter iter;
-    GValue value = { 0 };
     gint active;
 
     model = gtk_combo_box_get_model (combo);
     gtk_combo_box_get_active_iter (combo, &iter);
     gtk_tree_model_get (model, &iter, COLUMN_VALUE, &active, -1);
 
-    g_value_init (&value, G_TYPE_INT);
-    g_value_set_int (&value, active);
-    ibus_config_set_value (config, context->section, "lookup_table_orientation",
-                           &value);
+    ibus_config_set_value (config,
+                           context->section,
+                           "lookup_table_orientation",
+                           g_variant_new_int32 (active));
 }
 
 static void
@@ -367,7 +365,7 @@ start (const gchar *engine_name)
     GError *error = NULL;
     GtkCellRenderer *renderer;
     ConfigContext context;
-    GValue value = { 0 };
+    GVariant *value = NULL;
     gboolean is_foreground_set, is_background_set;
     GdkColor foreground, background;
     gint underline;
@@ -417,15 +415,16 @@ start (const gchar *engine_name)
     /* foreground color of pre-edit buffer */
     is_foreground_set = FALSE;
     color_to_gdk (PREEDIT_FOREGROUND, &foreground);
-    if (ibus_config_get_value (config, context.section, "preedit_foreground",
-                               &value)) {
+    if (value = ibus_config_get_value (config,
+                                       context.section,
+                                       "preedit_foreground")) {
         const gchar *color;
 
-        color = g_value_get_string (&value);
+        color = g_variant_get_string (value, NULL);
         if (g_strcmp0 (color, "none") != 0 &&
             gdk_color_parse (color, &foreground))
             is_foreground_set = TRUE;
-        g_value_unset (&value);
+        g_variant_unref (value);
     }
 
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(checkbutton_foreground),
@@ -445,16 +444,17 @@ start (const gchar *engine_name)
     /* background color of pre-edit buffer */
     is_background_set = FALSE;
     color_to_gdk (PREEDIT_BACKGROUND, &background);
-    if (ibus_config_get_value (config, context.section, "preedit_background",
-                               &value)) {
+    if (value = ibus_config_get_value (config,
+                                       context.section,
+                                       "preedit_background")) {
         const gchar *color;
 
-        color = g_value_get_string (&value);
+        color = g_variant_get_string (value, NULL);
         if (g_strcmp0 (color, "none") != 0 &&
             gdk_color_parse (color, &background))
             is_background_set = TRUE;
         g_debug ("preedit_background %d", is_background_set);
-        g_value_unset (&value);
+        g_variant_unref (value);
     }
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(checkbutton_background),
                                   is_background_set);
@@ -476,10 +476,11 @@ start (const gchar *engine_name)
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT(combobox_underline),
                                     renderer, "text", 0, NULL);
     underline = IBUS_ATTR_UNDERLINE_NONE;
-    if (ibus_config_get_value (config, context.section, "preedit_underline",
-                               &value)) {
-        underline = g_value_get_int (&value);
-        g_value_unset (&value);
+    if (value = ibus_config_get_value (config,
+                                       context.section,
+                                       "preedit_underline")) {
+        underline = g_variant_get_int32 (value);
+        g_variant_unref (value);
     }
 
     index = get_combo_box_index_by_value (GTK_COMBO_BOX(combobox_underline),
@@ -495,11 +496,11 @@ start (const gchar *engine_name)
     gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT(combobox_orientation),
                                     renderer, "text", 0, NULL);
     orientation = IBUS_ORIENTATION_SYSTEM;
-    if (ibus_config_get_value (config, context.section,
-                               "lookup_table_orientation",
-                               &value)) {
-        orientation = g_value_get_int (&value);
-        g_value_unset (&value);
+    if (value = ibus_config_get_value (config,
+                                       context.section,
+                                       "lookup_table_orientation")) {
+        orientation = g_variant_get_int32 (value);
+        g_variant_unref (value);
     }
 
     index = get_combo_box_index_by_value (GTK_COMBO_BOX(combobox_orientation),

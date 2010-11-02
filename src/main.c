@@ -51,7 +51,9 @@ start_component (void)
     engines = ibus_component_get_engines (component);
     for (p = engines; p != NULL; p = p->next) {
         IBusEngineDesc *engine = (IBusEngineDesc *)p->data;
-        ibus_factory_add_engine (factory, engine->name, IBUS_TYPE_M17N_ENGINE);
+        ibus_factory_add_engine (factory,
+                                 ibus_engine_desc_get_name (engine),
+                                 IBUS_TYPE_M17N_ENGINE);
     }
 
     if (ibus) {

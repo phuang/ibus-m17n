@@ -157,25 +157,25 @@ ibus_m17n_engine_new (MSymbol  lang,
     engine_title = ibus_m17n_mtext_to_utf8 (title);
     engine_icon = ibus_m17n_mtext_to_utf8 (icon);
     engine_desc = ibus_m17n_mtext_to_utf8 (desc);
-
-    engine = ibus_engine_desc_new (engine_name,
-                                   engine_longname,
-                                   engine_desc ? engine_desc : "",
-                                   msymbol_name (lang),
-                                   "GPL",
-                                   "",
-                                   engine_icon ? engine_icon : "",
-                                   "us");
-    /* set default rank to 0 */
-    engine->rank = 0;
-
+   
+    guint rank = 0; 
     for (i = 0; i < G_N_ELEMENTS(engine_config); i++) {
         if (g_pattern_match_simple (engine_config[i].name, engine_name)) {
             /* set rank of default keymap to 1 */
-            engine->rank = engine_config[i].rank;
+            rank = engine_config[i].rank;
             break;
         }
     }
+
+    engine = ibus_engine_desc_new_varargs ("name",        engine_name,
+                                           "longname",    engine_longname,
+                                           "description", engine_desc ? engine_desc : "",
+                                           "language",    msymbol_name (lang),
+                                           "license",     "GPL",
+                                           "icon",        engine_icon ? engine_icon : "",
+                                           "layout",      "us",
+                                           "rank",        rank,
+                                           NULL);
 
     g_free (engine_name);
     g_free (engine_longname);
