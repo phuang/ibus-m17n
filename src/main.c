@@ -51,7 +51,13 @@ start_component (void)
     engines = ibus_component_get_engines (component);
     for (p = engines; p != NULL; p = p->next) {
         IBusEngineDesc *engine = (IBusEngineDesc *)p->data;
-        ibus_factory_add_engine (factory, engine->name, IBUS_TYPE_M17N_ENGINE);
+        GType type = ibus_m17n_engine_get_type_for_name (engine->name);
+
+        if (type == G_TYPE_INVALID) {
+            g_debug ("Can not create engine type for %s", engine->name);
+            continue;
+        }
+        ibus_factory_add_engine (factory, engine->name, type);
     }
 
     if (ibus) {

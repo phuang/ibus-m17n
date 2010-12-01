@@ -4,9 +4,6 @@
 
 #include <ibus.h>
 
-#define IBUS_TYPE_M17N_ENGINE	\
-	(ibus_m17n_engine_get_type ())
-
-GType   ibus_m17n_engine_get_type    (void);
+GType   ibus_m17n_engine_get_type_for_name (const gchar *name);
 
 #endif
