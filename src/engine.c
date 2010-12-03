@@ -182,7 +182,10 @@ ibus_m17n_scan_engine_name (const gchar *engine_name,
     g_return_val_if_fail (g_str_has_prefix (engine_name, "m17n:"), FALSE);
     strv = g_strsplit (engine_name, ":", 3);
 
-    g_assert (g_strv_length (strv) == 3);
+    if (g_strv_length (strv) != 3) {
+        g_strfreev (strv);
+        g_return_val_if_reached (FALSE);
+    }
 
     *lang = strv[1];
     *name = strv[2];
@@ -211,7 +214,7 @@ ibus_m17n_scan_class_name (const gchar *class_name,
     /* Find the start position of <Name> */
     while (g_ascii_islower (*--p) && p > *lang)
         ;
-    g_assert (p > *lang);
+    g_return_val_if_fail (p > *lang, FALSE);
     *name = g_strdup (p);
     *p = '\0';
 
@@ -225,7 +228,7 @@ GType
 ibus_m17n_engine_get_type_for_name (const gchar *engine_name)
 {
     GType type;
-    gchar *type_name, *lang, *name;
+    gchar *type_name, *lang = NULL, *name = NULL;
 
     GTypeInfo type_info = {
         sizeof (IBusM17NEngineClass),
@@ -239,7 +242,11 @@ ibus_m17n_engine_get_type_for_name (const gchar *engine_name)
         (GInstanceInitFunc)    ibus_m17n_engine_init,
     };
 
-    ibus_m17n_scan_engine_name (engine_name, &lang, &name);
+    if (!ibus_m17n_scan_engine_name (engine_name, &lang, &name)) {
+        g_free (lang);
+        g_free (name);
+        return G_TYPE_INVALID;
+    }
     lang[0] = g_ascii_toupper (lang[0]);
     name[0] = g_ascii_toupper (name[0]);
     type_name = g_strdup_printf ("IBusM17N%s%sEngine", lang, name);
@@ -269,7 +276,7 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
     IBusEngineClass *engine_class = IBUS_ENGINE_CLASS (klass);
     GValue value = { 0 };
     gboolean preedit_highlight;
-    gchar *engine_name, *lang, *name;
+    gchar *engine_name, *lang = NULL, *name = NULL;
 
     if (parent_class == NULL)
         parent_class = (IBusEngineClass *) g_type_class_peek_parent (klass);
@@ -294,7 +301,12 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 
     engine_class->property_activate = ibus_m17n_engine_property_activate;
 
-    ibus_m17n_scan_class_name (G_OBJECT_CLASS_NAME (klass), &lang, &name);
+    if (!ibus_m17n_scan_class_name (G_OBJECT_CLASS_NAME (klass),
+                                    &lang, &name)) {
+        g_free (lang);
+        g_free (name);
+        return;
+    }
     engine_name = g_strdup_printf ("m17n:%s:%s", lang, name);
     klass->config_section = g_strdup_printf ("engine/M17N/%s/%s", lang, name);
     g_free (lang);
@@ -451,21 +463,18 @@ ibus_m17n_engine_constructor (GType                   type,
     klass = (IBusM17NEngineClass *) object_class;
     if (klass->im == NULL) {
         const gchar *engine_name;
-        gchar *lang;
-        gchar *name;
-        gchar **strv;
+        gchar *lang = NULL, *name = NULL;
 
         engine_name = ibus_engine_get_name ((IBusEngine *) m17n);
-        strv = g_strsplit (engine_name, ":", 3);
-
-        g_assert (g_strv_length (strv) == 3);
-        g_assert (g_strcmp0 (strv[0], "m17n") == 0);
-
-        lang = strv[1];
-        name = strv[2];
+        if (!ibus_m17n_scan_engine_name (engine_name, &lang, &name)) {
+            g_free (lang);
+            g_free (name);
+            return NULL;
+        }
 
         klass->im = minput_open_im (msymbol (lang), msymbol (name), NULL);
-        g_strfreev (strv);
+        g_free (lang);
+        g_free (name);
 
         if (klass->im == NULL) {
             g_warning ("Can not find m17n keymap %s", engine_name);
