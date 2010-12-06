@@ -50,9 +50,17 @@ test_m17n_LDADD = \
 
 libexec_PROGRAMS = ibus-engine-m17n ibus-setup-m17n
 
-ibus_engine_m17n_SOURCES = \
+noinst_LIBRARIES = libm17ncommon.a
+
+libm17ncommon_a_SOURCES = \
 	m17nutil.c \
 	m17nutil.h \
+	$(NULL)
+libm17ncommon_a_CFLAGS = \
+	@IBUS_CFLAGS@ \
+	@M17N_CFLAGS@ \
+	$(NULL)
+ibus_engine_m17n_SOURCES = \
 	main.c \
 	engine.c \
 	engine.h \
@@ -64,6 +72,7 @@ ibus_engine_m17n_CFLAGS = \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
 	$(NULL)
 ibus_engine_m17n_LDADD = \
+	libm17ncommon.a \
 	@IBUS_LIBS@ \
 	@M17N_LIBS@ \
 	$(NULL)
@@ -74,8 +83,6 @@ setup_DATA = \
 setupdir = $(pkgdatadir)/setup
 
 ibus_setup_m17n_SOURCES = \
-	m17nutil.c \
-	m17nutil.h \
 	setup.c \
 	$(NULL)
 ibus_setup_m17n_CFLAGS = \
@@ -85,6 +92,7 @@ ibus_setup_m17n_CFLAGS = \
 	-DSETUPDIR=\"$(setupdir)\" \
 	$(NULL)
 ibus_setup_m17n_LDADD = \
+	libm17ncommon.a \
 	@IBUS_LIBS@ \
 	@M17N_LIBS@ \
 	@GTK2_LIBS@ \
