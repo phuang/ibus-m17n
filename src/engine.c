@@ -275,8 +275,8 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
     IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS (klass);
     IBusEngineClass *engine_class = IBUS_ENGINE_CLASS (klass);
     GValue value = { 0 };
-    gboolean preedit_highlight;
     gchar *engine_name, *lang = NULL, *name = NULL;
+    IBusM17NEngineConfig *engine_config;
 
     if (parent_class == NULL)
         parent_class = (IBusEngineClass *) g_type_class_peek_parent (klass);
@@ -318,7 +318,7 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
     klass->preedit_underline = IBUS_ATTR_UNDERLINE_NONE;
     klass->lookup_table_orientation = IBUS_ORIENTATION_SYSTEM;
 
-    preedit_highlight = ibus_m17n_preedit_highlight (engine_name);
+    engine_config = ibus_m17n_get_engine_config (engine_name);
     g_free (engine_name);
 
     if (ibus_config_get_value (config,
@@ -329,7 +329,7 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 
         klass->preedit_foreground = ibus_m17n_parse_color (hex);
         g_value_unset (&value);
-    } else if (preedit_highlight)
+    } else if (engine_config->preedit_highlight)
         klass->preedit_foreground = PREEDIT_FOREGROUND;
 
     if (ibus_config_get_value (config,
@@ -340,7 +340,7 @@ ibus_m17n_engine_class_init (IBusM17NEngineClass *klass)
 
         klass->preedit_background = ibus_m17n_parse_color (hex);
         g_value_unset (&value);
-    } else if (preedit_highlight)
+    } else if (engine_config->preedit_highlight)
         klass->preedit_background = PREEDIT_BACKGROUND;
 
     if (ibus_config_get_value (config,

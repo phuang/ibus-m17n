@@ -22,6 +22,8 @@ AM_CFLAGS = \
 	@IBUS_CFLAGS@ \
 	@M17N_CFLAGS@ \
 	-DPKGDATADIR=\"$(pkgdatadir)\" \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-DSETUPDIR=\"$(setupdir)\" \
 	$(NULL)
 AM_LDADD = \
 	@IBUS_LIBS@ \
@@ -56,20 +58,10 @@ libm17ncommon_a_SOURCES = \
 	m17nutil.c \
 	m17nutil.h \
 	$(NULL)
-libm17ncommon_a_CFLAGS = \
-	@IBUS_CFLAGS@ \
-	@M17N_CFLAGS@ \
-	$(NULL)
 ibus_engine_m17n_SOURCES = \
 	main.c \
 	engine.c \
 	engine.h \
-	$(NULL)
-ibus_engine_m17n_CFLAGS = \
-	@IBUS_CFLAGS@ \
-	@M17N_CFLAGS@ \
-	-DPKGDATADIR=\"$(pkgdatadir)\" \
-	-DLIBEXECDIR=\"$(libexecdir)\" \
 	$(NULL)
 ibus_engine_m17n_LDADD = \
 	libm17ncommon.a \
@@ -79,6 +71,7 @@ ibus_engine_m17n_LDADD = \
 
 setup_DATA = \
 	ibus-m17n-preferences.ui \
+	default.xml \
 	$(NULL)
 setupdir = $(pkgdatadir)/setup
 
@@ -86,10 +79,8 @@ ibus_setup_m17n_SOURCES = \
 	setup.c \
 	$(NULL)
 ibus_setup_m17n_CFLAGS = \
-	@IBUS_CFLAGS@ \
-	@M17N_CFLAGS@ \
 	@GTK2_CFLAGS@ \
-	-DSETUPDIR=\"$(setupdir)\" \
+	$(AM_CFLAGS) \
 	$(NULL)
 ibus_setup_m17n_LDADD = \
 	libm17ncommon.a \
@@ -104,19 +95,31 @@ component_DATA = \
 componentdir = @datadir@/ibus/component
 
 EXTRA_DIST = \
-	m17n.xml.in \
+	m17n.xml.in.in \
+	default.xml.in \
 	$(setup_DATA) \
+	$(NULL)
+
+DISTCLEANFILES = \
+	m17n.xml.in \
+	default.xml.in \
 	$(NULL)
 
 CLEANFILES = \
 	m17n.xml \
+	default.xml \
 	$(NULL)
 
 m17n.xml: m17n.xml.in
+default.xml: default.xml.in
+
+SUFFIXES = .xml.in .xml
+.xml.in.xml:
 	$(AM_V_GEN) \
 	( \
 		libexecdir=${libexecdir}; \
 		pkgdatadir=${pkgdatadir}; \
+		setupdir=${setupdir}; \
 		s=`cat $<`; \
 		eval "echo \"$${s}\""; \
 	) > $@

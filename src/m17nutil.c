@@ -7,61 +7,21 @@
 
 static MConverter *utf8_converter = NULL;
 
-static const struct {
-    const gchar *name;
-    gint rank;                  /* engine rank (default 0) */
-    gboolean preedit_highlight; /* whether to highlight preedit (default 0) */
-} engine_config[] = {
-    /* Indic engines which represent languages. */
-    {"m17n:as:phonetic", 2, FALSE},
-    {"m17n:bn:inscript", 2, FALSE},
-    {"m17n:gu:inscript", 2, FALSE},
-    {"m17n:hi:inscript", 2, FALSE},
-    {"m17n:kn:kgp", 2, FALSE},
-    {"m17n:ks:kbd", 2, FALSE},
-    {"m17n:mai:inscript", 2, FALSE},
-    {"m17n:ml:inscript", 2, FALSE},
-    {"m17n:mr:inscript", 2, FALSE},
-    {"m17n:ne:rom", 2, FALSE},
-    {"m17n:or:inscript", 2, FALSE},
-    {"m17n:pa:inscript", 2, FALSE},
-    {"m17n:sa:harvard-kyoto", 2, FALSE},
-    {"m17n:sd:inscript", 2, FALSE},
-    {"m17n:si:wijesekera", 2, FALSE},
-    {"m17n:ta:tamil99", 2, FALSE},
-    {"m17n:te:inscript", 2, FALSE},
-    /* Other Indic engines should be selected by default:
-       https://bugzilla.redhat.com/show_bug.cgi?id=640896
-     */
-    {"m17n:as:*", 1, FALSE},
-    {"m17n:bn:*", 1, FALSE},
-    {"m17n:gu:*", 1, FALSE},
-    {"m17n:hi:*", 1, FALSE},
-    {"m17n:kn:*", 1, FALSE},
-    {"m17n:ks:*", 1, FALSE},
-    {"m17n:mai:*", 1, FALSE},
-    {"m17n:ml:*", 1, FALSE},
-    {"m17n:mr:*", 1, FALSE},
-    {"m17n:ne:*", 1, FALSE},
-    {"m17n:or:*", 1, FALSE},
-    {"m17n:pa:*", 1, FALSE},
-    {"m17n:sa:*", 1, FALSE},
-    {"m17n:sd:*", 1, FALSE},
-    {"m17n:si:*", 1, FALSE},
-    {"m17n:ta:*", 1, FALSE},
-    {"m17n:te:*", 1, FALSE},
-    /* Chinese and Japanese engines which require preedit decoration. */
-    {"m17n:ja:anthy", 0, TRUE},
-    {"m17n:zh:cangjie", 0, TRUE},
-    {"m17n:zh:py-b5", 0, TRUE},
-    {"m17n:zh:py-gb", 0, TRUE},
-    {"m17n:zh:py", 0, TRUE},
-    {"m17n:zh:quick", 0, TRUE},
-    {"m17n:zh:tonepy-b5", 0, TRUE},
-    {"m17n:zh:tonepy-gb", 0, TRUE},
-    {"m17n:zh:tonepy", 0, TRUE},
-    {"m17n:zh:util", 0, TRUE}
+#define DEFAULT_XML (SETUPDIR "/default.xml")
+
+static IBusM17NEngineConfig default_config = {
+    .rank = 0,
+    .preedit_highlight = FALSE
 };
+
+struct _IBusM17NEngineConfigNode {
+    gchar *name;
+    IBusM17NEngineConfig config;
+};
+
+typedef struct _IBusM17NEngineConfigNode IBusM17NEngineConfigNode;
+
+static GSList *config_list = NULL;
 
 void
 ibus_m17n_init_common (void)
@@ -149,7 +109,6 @@ ibus_m17n_engine_new (MSymbol  lang,
     gchar *engine_title;
     gchar *engine_icon;
     gchar *engine_desc;
-    gint i;
 
     engine_name = g_strdup_printf ("m17n:%s:%s", msymbol_name (lang), msymbol_name (name));
 
@@ -168,14 +127,6 @@ ibus_m17n_engine_new (MSymbol  lang,
                                    "us");
     /* set default rank to 0 */
     engine->rank = 0;
-
-    for (i = 0; i < G_N_ELEMENTS(engine_config); i++) {
-        if (g_pattern_match_simple (engine_config[i].name, engine_name)) {
-            /* set rank of default keymap to 1 */
-            engine->rank = engine_config[i].rank;
-            break;
-        }
-    }
 
     g_free (engine_name);
     g_free (engine_longname);
@@ -269,11 +220,62 @@ ibus_m17n_list_engines (void)
     return engines;
 }
 
+IBusM17NEngineConfig *
+ibus_m17n_get_engine_config (const gchar *engine_name)
+{
+    GSList *p;
+
+    for (p = config_list; p != NULL; p = p->next) {
+        IBusM17NEngineConfigNode *cnode = p->data;
+
+        if (g_pattern_match_simple (cnode->name, engine_name))
+            return &cnode->config;
+    }
+    return &default_config;
+}
+
+static gboolean
+ibus_m17n_engine_config_parse_xml_node (IBusM17NEngineConfigNode *cnode,
+                                        XMLNode                  *node)
+{
+    GList *p;
+
+    cnode->name = NULL;
+    memcpy (&cnode->config, &default_config,
+            sizeof (IBusM17NEngineConfig));
+
+    for (p = node->sub_nodes; p != NULL; p = p->next) {
+        XMLNode *sub_node = (XMLNode *) p->data;
+
+        if (g_strcmp0 (sub_node->name, "name") == 0) {
+            g_free (cnode->name);
+            cnode->name = g_strdup (sub_node->text);
+            continue;
+        }
+        if (g_strcmp0 (sub_node->name , "rank") == 0) {
+            cnode->config.rank = atoi (sub_node->text);
+            continue;
+        }
+        if (g_strcmp0 (sub_node->name , "preedit-highlight") == 0) {
+            if (g_ascii_strcasecmp ("TRUE", sub_node->text) == 0)
+                cnode->config.preedit_highlight = TRUE;
+            else if (g_ascii_strcasecmp ("FALSE", sub_node->text) != 0)
+                g_warning ("<%s> element contains invalid boolean value %s",
+                           sub_node->name, sub_node->text);
+            continue;
+        }
+        g_warning ("<engine> element contains invalid element <%s>",
+                   sub_node->name);
+    }
+    return TRUE;
+}
+
 IBusComponent *
 ibus_m17n_get_component (void)
 {
     GList *engines, *p;
     IBusComponent *component;
+    XMLNode *node;
 
     component = ibus_component_new ("org.freedesktop.IBus.M17n",
                                     N_("M17N"),
@@ -284,26 +286,45 @@ ibus_m17n_get_component (void)
                                     "",
                                     "ibus-m17n");
 
+    node = ibus_xml_parse_file (DEFAULT_XML);
+    if (node && g_strcmp0 (node->name, "engines") == 0) {
+        for (p = node->sub_nodes; p != NULL; p = p->next) {
+            XMLNode *sub_node = p->data;
+            IBusM17NEngineConfigNode *cnode;
+
+            if (g_strcmp0 (sub_node->name, "engine") != 0) {
+                g_warning ("<engines> element contains invalid element <%s>",
+                           sub_node->name);
+                continue;
+            }
+
+            cnode = g_slice_new (IBusM17NEngineConfigNode);
+            if (!ibus_m17n_engine_config_parse_xml_node (cnode, sub_node)) {
+                g_slice_free (IBusM17NEngineConfigNode, cnode);
+                continue;
+            }
+            config_list = g_slist_prepend (config_list, cnode);
+        }
+        config_list = g_slist_reverse (config_list);
+    } else
+        g_warning ("failed to parse %s", DEFAULT_XML);
+    if (node)
+        ibus_xml_free (node);
+
     engines = ibus_m17n_list_engines ();
 
     for (p = engines; p != NULL; p = p->next) {
-        ibus_component_add_engine (component, (IBusEngineDesc *) p->data);
+        IBusEngineDesc *engine = p->data;
+        IBusM17NEngineConfig *config;
+
+        config = ibus_m17n_get_engine_config (engine->name);
+        engine->rank = config->rank;
+        ibus_component_add_engine (component, engine);
     }
 
     g_list_free (engines);
+
     return component;
-}
-
-gboolean
-ibus_m17n_preedit_highlight (const gchar *engine_name)
-{
-    gint i;
-
-    for (i = 0; i < G_N_ELEMENTS(engine_config); i++) {
-        if (g_pattern_match_simple (engine_config[i].name, engine_name))
-            return engine_config[i].preedit_highlight;
-    }
-    return FALSE;
 }
 
 #ifdef DEBUG
@@ -332,4 +353,3 @@ int main ()
     return 0;
 }
 #endif
-

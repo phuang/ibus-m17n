@@ -80,6 +80,7 @@ Makefile
 ibus-m17n.spec
 src/Makefile
 src/m17n.xml.in
+src/default.xml.in
 icons/Makefile
 m4/Makefile
 ])
