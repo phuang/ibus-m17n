@@ -86,6 +86,14 @@
 		<rank>2</rank>
 		<preedit-highlight>FALSE</preedit-highlight>
 	</engine>
+	<!-- Samanala should have lower rank than other Sinhala
+	     engines since it is the only non-keyboard input method in
+	     Sinhala. -->
+	<engine>
+		<name>m17n:si:samanala</name>
+		<rank>0</rank>
+		<preedit-highlight>FALSE</preedit-highlight>
+	</engine>
 	<!-- Other Indic engines should be selected by default:
 	     https://bugzilla.redhat.com/show_bug.cgi?id=640896 -->
 	<engine>
