@@ -11,10 +11,10 @@
 #define PREEDIT_BACKGROUND 0x00c8c8f0
 
 struct _IBusM17NEngineConfig {
-    /* engine rank (default 0) */
+    /* engine rank */
     gint rank;
 
-    /* whether to highlight preedit (default FALSE) */
+    /* whether to highlight preedit */
     gboolean preedit_highlight;
 };
 

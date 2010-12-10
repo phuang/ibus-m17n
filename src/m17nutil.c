@@ -9,11 +9,6 @@ static MConverter *utf8_converter = NULL;
 
 #define DEFAULT_XML (SETUPDIR "/default.xml")
 
-static IBusM17NEngineConfig default_config = {
-    .rank = 0,
-    .preedit_highlight = FALSE
-};
-
 struct _IBusM17NEngineConfigNode {
     gchar *name;
     IBusM17NEngineConfig config;
@@ -101,7 +96,8 @@ ibus_m17n_engine_new (MSymbol  lang,
                       MSymbol  name,
                       MText   *title,
                       MText   *icon,
-                      MText   *desc)
+                      MText   *desc,
+                      IBusM17NEngineConfig *config)
 {
     IBusEngineDesc *engine;
     gchar *engine_name;
@@ -125,8 +121,7 @@ ibus_m17n_engine_new (MSymbol  lang,
                                    "",
                                    engine_icon ? engine_icon : "",
                                    "us");
-    /* set default rank to 0 */
-    engine->rank = 0;
+    engine->rank = config->rank;
 
     g_free (engine_name);
     g_free (engine_longname);
@@ -157,9 +152,27 @@ ibus_m17n_list_engines (void)
             MText *icon = NULL;
             MText *desc = NULL;
             MPlist *l;
+            gchar *engine_name;
+            IBusM17NEngineConfig *config;
 
             lang = tag[1];
             name = tag[2];
+
+            /* ignore input-method explicitly blacklisted in default.xml */
+            engine_name = g_strdup_printf ("m17n:%s:%s", msymbol_name (lang), msymbol_name (name));
+            config = ibus_m17n_get_engine_config (engine_name);
+            if (config == NULL) {
+                g_warning ("can't load config for %s", engine_name);
+                g_free (engine_name);
+                continue;
+            }
+            if (config->rank < 0) {
+                g_warning ("skipped %s since its rank is lower than 0",
+                           engine_name);
+                g_free (engine_name);
+                continue;
+            }
+            g_free (engine_name);
 
             l = minput_get_variable (lang, name, msymbol ("candidates-charset"));
             if (l) {
@@ -205,7 +218,7 @@ ibus_m17n_list_engines (void)
                 icon = mplist_value (n);
             }
 
-            engines = g_list_append (engines, ibus_m17n_engine_new (lang, name, title, icon, desc));
+            engines = g_list_append (engines, ibus_m17n_engine_new (lang, name, title, icon, desc, config));
 
             if (desc)
                 m17n_object_unref (desc);
@@ -231,7 +244,7 @@ ibus_m17n_get_engine_config (const gchar *engine_name)
         if (g_pattern_match_simple (cnode->name, engine_name))
             return &cnode->config;
     }
-    return &default_config;
+    g_return_val_if_reached (NULL);
 }
 
 static gboolean
@@ -239,10 +252,6 @@ ibus_m17n_engine_config_parse_xml_node (IBusM17NEngineConfigNode *cnode,
                                         XMLNode                  *node)
 {
     GList *p;
-
-    cnode->name = NULL;
-    memcpy (&cnode->config, &default_config,
-            sizeof (IBusM17NEngineConfig));
 
     for (p = node->sub_nodes; p != NULL; p = p->next) {
         XMLNode *sub_node = (XMLNode *) p->data;
@@ -298,7 +307,7 @@ ibus_m17n_get_component (void)
                 continue;
             }
 
-            cnode = g_slice_new (IBusM17NEngineConfigNode);
+            cnode = g_slice_new0 (IBusM17NEngineConfigNode);
             if (!ibus_m17n_engine_config_parse_xml_node (cnode, sub_node)) {
                 g_slice_free (IBusM17NEngineConfigNode, cnode);
                 continue;
@@ -313,14 +322,8 @@ ibus_m17n_get_component (void)
 
     engines = ibus_m17n_list_engines ();
 
-    for (p = engines; p != NULL; p = p->next) {
-        IBusEngineDesc *engine = p->data;
-        IBusM17NEngineConfig *config;
-
-        config = ibus_m17n_get_engine_config (engine->name);
-        engine->rank = config->rank;
-        ibus_component_add_engine (component, engine);
-    }
+    for (p = engines; p != NULL; p = p->next)
+        ibus_component_add_engine (component, p->data);
 
     g_list_free (engines);
 
