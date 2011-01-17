@@ -12,6 +12,7 @@
 	<observed-paths>
 		<path>/usr/share/m17n/</path>
 		<path>${setupdir}/default.xml</path>
+		<path>~/.m17n.d/</path>
 	</observed-paths>
 	<engines exec=\"${libexecdir}/ibus-engine-m17n --xml\" />
 </component>
