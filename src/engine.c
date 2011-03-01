@@ -212,7 +212,7 @@ ibus_m17n_scan_class_name (const gchar *class_name,
     *p = '\0';
 
     /* Find the start position of <Name> */
-    while (g_ascii_islower (*--p) && p > *lang)
+    while (!g_ascii_isupper (*--p) && p > *lang)
         ;
     g_return_val_if_fail (p > *lang, FALSE);
     *name = g_strdup (p);
