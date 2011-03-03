@@ -65,6 +65,9 @@ PKG_CHECK_MODULES(GTK2, [
     gtk+-2.0
 ])
 
+# check if minput_list, which is available in m17n-lib 1.6.2+ (CVS)
+AC_REPLACE_FUNCS([minput_list])
+
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-m17n
 AC_SUBST(GETTEXT_PACKAGE)

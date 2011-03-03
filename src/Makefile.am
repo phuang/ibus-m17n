@@ -58,6 +58,8 @@ libm17ncommon_a_SOURCES = \
 	m17nutil.c \
 	m17nutil.h \
 	$(NULL)
+libm17ncommon_a_LIBADD = $(LIBOBJS)
+
 ibus_engine_m17n_SOURCES = \
 	main.c \
 	engine.c \

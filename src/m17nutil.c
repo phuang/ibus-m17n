@@ -132,6 +132,10 @@ ibus_m17n_engine_new (MSymbol  lang,
     return engine;
 }
 
+#ifndef HAVE_MINPUT_LIST
+MPlist *minput_list (MSymbol language);
+#endif  /* !HAVE_MINPUT_LIST */
+
 GList *
 ibus_m17n_list_engines (void)
 {
@@ -139,25 +143,26 @@ ibus_m17n_list_engines (void)
     MPlist *imlist;
     MPlist *elm;
 
-    imlist = mdatabase_list(msymbol("input-method"), Mnil, Mnil, Mnil);
-
+    imlist = minput_list (Mnil);
     for (elm = imlist; elm && mplist_key(elm) != Mnil; elm = mplist_next(elm)) {
-        MDatabase *mdb = (MDatabase *) mplist_value(elm);
-        MSymbol *tag = mdatabase_tag(mdb);
+        MSymbol lang;
+        MSymbol name;
+        MSymbol sane;
+        MText *title = NULL;
+        MText *icon = NULL;
+        MText *desc = NULL;
+        MPlist *l;
+        gchar *engine_name;
+        IBusM17NEngineConfig *config;
 
-        if (tag[1] != Mnil && tag[2] != Mnil) {
-            MSymbol lang;
-            MSymbol name;
-            MText *title = NULL;
-            MText *icon = NULL;
-            MText *desc = NULL;
-            MPlist *l;
-            gchar *engine_name;
-            IBusM17NEngineConfig *config;
+        l = mplist_value (elm);
+        lang = mplist_value (l);
+        l = mplist_next (l);
+        name = mplist_value (l);
+        l = mplist_next (l);
+        sane = mplist_value (l);
 
-            lang = tag[1];
-            name = tag[2];
-
+        if (sane == Mt) {
             /* ignore input-method explicitly blacklisted in default.xml */
             engine_name = g_strdup_printf ("m17n:%s:%s", msymbol_name (lang), msymbol_name (name));
             config = ibus_m17n_get_engine_config (engine_name);
