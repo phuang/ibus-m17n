@@ -61,9 +61,32 @@ PKG_CHECK_MODULES(M17N, [
 ])
 
 # check gtk for setup
-PKG_CHECK_MODULES(GTK2, [
-    gtk+-2.0
-])
+AC_MSG_CHECKING([which gtk+ version to compile against])
+AC_ARG_WITH([gtk],
+  [AS_HELP_STRING([--with-gtk=2.0|3.0|no],[which gtk+ version to compile against (default: 2.0)])],
+  [case "$with_gtk" in
+     2.0|3.0|no) ;;
+     *) AC_MSG_ERROR([invalid gtk version specified]) ;;
+   esac],
+  [with_gtk=2.0])
+AC_MSG_RESULT([$with_gtk])
+
+case "$with_gtk" in
+  2.0) GTK_API_VERSION=2.0
+       GTK_REQUIRED=2.12.12
+       ;;
+  3.0) GTK_API_VERSION=3.0
+       GTK_REQUIRED=2.90.5
+       ;;
+esac
+
+if test x$with_gtk != xno; then
+  PKG_CHECK_MODULES([GTK], [gtk+-$GTK_API_VERSION >= $GTK_REQUIRED], ,
+    with_gtk=no)
+  AC_DEFINE([HAVE_SETUP], [1], [Define if setup dialog is installed])
+fi
+
+AM_CONDITIONAL([HAVE_GTK],[test x$with_gtk != xno])
 
 # check if minput_list, which is available in m17n-lib 1.6.2+ (CVS)
 AC_REPLACE_FUNCS([minput_list])

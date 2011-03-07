@@ -33,7 +33,9 @@ struct _IBusM17NEngine {
     MInputContext *context;
     IBusLookupTable *table;
     IBusProperty    *status_prop;
+#ifdef HAVE_SETUP
     IBusProperty    *setup_prop;
+#endif  /* HAVE_SETUP */
     IBusPropList    *prop_list;
 };
 
@@ -419,6 +421,9 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
     IBusText* label;
     IBusText* tooltip;
 
+    m17n->prop_list = ibus_prop_list_new ();
+    g_object_ref_sink (m17n->prop_list);
+
     m17n->status_prop = ibus_property_new ("status",
                                            PROP_TYPE_NORMAL,
                                            NULL,
@@ -429,7 +434,9 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
                                            0,
                                            NULL);
     g_object_ref_sink (m17n->status_prop);
+    ibus_prop_list_append (m17n->prop_list,  m17n->status_prop);
 
+#ifdef HAVE_SETUP
     label = ibus_text_new_from_string ("Setup");
     tooltip = ibus_text_new_from_string ("Configure M17N engine");
     m17n->setup_prop = ibus_property_new ("setup",
@@ -442,11 +449,8 @@ ibus_m17n_engine_init (IBusM17NEngine *m17n)
                                           PROP_STATE_UNCHECKED,
                                           NULL);
     g_object_ref_sink (m17n->setup_prop);
-
-    m17n->prop_list = ibus_prop_list_new ();
-    g_object_ref_sink (m17n->prop_list);
-    ibus_prop_list_append (m17n->prop_list,  m17n->status_prop);
     ibus_prop_list_append (m17n->prop_list, m17n->setup_prop);
+#endif  /* HAVE_SETUP */
 
     m17n->table = ibus_lookup_table_new (9, 0, TRUE, TRUE);
     g_object_ref_sink (m17n->table);
@@ -526,10 +530,12 @@ ibus_m17n_engine_destroy (IBusM17NEngine *m17n)
         m17n->status_prop = NULL;
     }
 
+#if HAVE_SETUP
     if (m17n->setup_prop) {
         g_object_unref (m17n->setup_prop);
         m17n->setup_prop = NULL;
     }
+#endif  /* HAVE_SETUP */
 
     if (m17n->table) {
         g_object_unref (m17n->table);
@@ -824,6 +830,7 @@ ibus_m17n_engine_property_activate (IBusEngine  *engine,
 {
     IBusM17NEngine *m17n = (IBusM17NEngine *) engine;
 
+#ifdef HAVE_SETUP
     if (g_strcmp0 (prop_name, "setup") == 0) {
         const gchar *engine_name;
         gchar *setup;
@@ -835,6 +842,8 @@ ibus_m17n_engine_property_activate (IBusEngine  *engine,
         g_spawn_command_line_async (setup, NULL);
         g_free (setup);
     }
+#endif  /* HAVE_SETUP */
+
     parent_class->property_activate (engine, prop_name, prop_state);
 }
 
