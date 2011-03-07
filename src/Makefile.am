@@ -47,6 +47,7 @@ test_m17n_CFLAGS = \
 	-DDEBUG \
 	$(NULL)
 test_m17n_LDADD = \
+	libm17ncommon.a	\
 	$(AM_LDADD) \
 	$(NULL)
 
