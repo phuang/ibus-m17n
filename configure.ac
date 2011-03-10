@@ -89,7 +89,13 @@ fi
 AM_CONDITIONAL([HAVE_GTK],[test x$with_gtk != xno])
 
 # check if minput_list, which is available in m17n-lib 1.6.2+ (CVS)
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS="$CFLAGS $M17N_CFLAGS"
+LIBS="$LIBS $M17N_LIBS"
 AC_REPLACE_FUNCS([minput_list])
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
 
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-m17n
