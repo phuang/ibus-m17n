@@ -69,7 +69,7 @@ debian/changelog:
 		version=@VERSION@; \
 		serie=$(serie); \
 		if test -z "$$serie"; then \
-		  serie=lucid; \
+		  serie=maverick; \
 		fi; \
 		if test -z "$$release"; then \
 		  release=1; \
