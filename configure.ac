@@ -97,6 +97,15 @@ AC_REPLACE_FUNCS([minput_list])
 CFLAGS="$save_CFLAGS"
 LIBS="$save_LIBS"
 
+# check if ibus_engine_get_surrounding_text, which is available in ibus-1.3.99+ (git master)
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS="$CFLAGS $IBUS_CFLAGS"
+LIBS="$LIBS $IBUS_LIBS"
+AC_CHECK_FUNCS([ibus_engine_get_surrounding_text])
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
+
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-m17n
 AC_SUBST(GETTEXT_PACKAGE)
